@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using TodoList.API.Data;
+using TodoList.API.Middlewares;
 using TodoList.API.Services;
 using TodoList.API.Validators;
 
@@ -38,5 +39,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseMiddleware<TokenSessionMiddleware>();
+app.UseAuthorization();
 
 app.Run();
