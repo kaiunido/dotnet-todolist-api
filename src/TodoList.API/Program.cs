@@ -26,6 +26,8 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(
 ));
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
