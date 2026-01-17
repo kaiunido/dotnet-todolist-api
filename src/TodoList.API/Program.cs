@@ -6,18 +6,23 @@ using TodoList.API.Middlewares;
 using TodoList.API.Services;
 using TodoList.API.Validators;
 
-DotNetEnv.Env.Load();
+DotNetEnv.Env.TraversePath().Load();
 
 var builder = WebApplication.CreateBuilder(args);
-var rawConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var connectionString = Environment.ExpandEnvironmentVariables(rawConnectionString ?? "");
+
+var connectionString = $"Server={Environment.GetEnvironmentVariable("DB_HOST")};" +
+                       $"Port={Environment.GetEnvironmentVariable("DB_PORT")};" +
+                       $"Database={Environment.GetEnvironmentVariable("DB_NAME")};" +
+                       $"Uid={Environment.GetEnvironmentVariable("DB_USER")};" +
+                       $"Pwd={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
+                       "AllowPublicKeyRetrieval=True;";
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseMySql(
-    connectionString, ServerVersion.AutoDetect(connectionString)
+builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(
+    connectionString
 ));
 
 builder.Services.AddHttpContextAccessor();
