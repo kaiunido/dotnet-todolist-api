@@ -19,6 +19,7 @@ var connectionString = $"Server={Environment.GetEnvironmentVariable("DB_HOST")};
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(
@@ -50,5 +51,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseMiddleware<TokenSessionMiddleware>();
 app.UseAuthorization();
+
+app.MapControllers();
 
 app.Run();
