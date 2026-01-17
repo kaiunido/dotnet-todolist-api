@@ -1,0 +1,36 @@
+# === [ .NET / C# ] ===
+# Build artifacts
+[Bb]in/
+[Oo]bj/
+out/
+publish/
+
+# IDE specific files (Visual Studio / Rider)
+.vs/
+.vscode/
+.idea/
+*.sln.iml
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+# === [ Docker ] ===
+# Docker-related exclusions
+.dockerignore
+# Ignore local database data folder if mapped outside managed volumes
+todolist_db/
+
+# === [ Security & Environment ] ===
+# Sensitive information - NEVER commit these files
+.env
+.env.local
+.env.*.local
+*.appsettings.Secrets.json
+_secrets/
+
+# === [ Operating System ] ===
+# OS generated files
+[Tt]humbs.db
+*.ds_store
+.DS_Store
