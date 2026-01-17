@@ -54,9 +54,17 @@ public class AuthService(
         };
     }
 
-    public Task<bool> LogoutAsync(string token)
+    public async Task<bool> LogoutAsync(Guid jti)
     {
-        throw new NotImplementedException();
+        var session = await _context.UserSessions
+            .FirstOrDefaultAsync(s => s.Jti == jti);
+
+        if (session == null) return false;
+
+        _context.UserSessions.Remove(session);
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 
     private static string HashPassword(string password)

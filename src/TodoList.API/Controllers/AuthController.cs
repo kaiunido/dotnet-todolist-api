@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoList.API.DTOs;
 using TodoList.API.Services;
@@ -29,5 +30,20 @@ public class AuthController(IAuthService _authService) : ControllerBase
             new {pid = authResponse.User.Pid},
             authResponse
         );
+    }
+
+    [Authorize]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var jtiClaim = User
+            .FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames
+                .Jti)?.Value;
+
+        if (string.IsNullOrEmpty(jtiClaim)) return BadRequest();
+
+        await _authService.LogoutAsync(Guid.Parse(jtiClaim));
+
+        return NoContent();
     }
 }
