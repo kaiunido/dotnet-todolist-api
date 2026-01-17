@@ -39,7 +39,7 @@ public class AuthService(
             throw new UnauthorizedAccessException("Invalid email or password.");
         }
 
-        var token = _tokenService.GenerateToken(user);
+        var token = await _tokenService.GenerateTokenAsync(user);
 
         return new AuthResponseDto
         {

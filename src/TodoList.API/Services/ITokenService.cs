@@ -4,5 +4,5 @@ namespace TodoList.API.Services;
 
 public interface ITokenService
 {
-    string GenerateToken(User user);
+    Task<string> GenerateTokenAsync(User user, string? deviceInfo = null);
 }
