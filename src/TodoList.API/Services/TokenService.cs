@@ -1,23 +1,27 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using TodoList.API.Configurations;
 using TodoList.API.Data;
 using TodoList.API.Models;
 
 namespace TodoList.API.Services;
 
 public class TokenService(
-    IConfiguration config,
+    IOptions<JwtSettings> jwtOptions,
     IHttpContextAccessor httpContextAccessor,
-    AppDbContext _context
-) : ITokenService {
+    AppDbContext context
+) : ITokenService
+{
+
+    private readonly JwtSettings _settings = jwtOptions.Value;
+
     public async Task<string> GenerateTokenAsync(User user, string? deviceInfo = null)
     {
         var jti = Guid.NewGuid();
-        var expires = DateTime.Now.AddMinutes(double.Parse(
-            Environment.ExpandEnvironmentVariables(config["Jwt:ExpireMinutes"] ?? "60")
-        ));
+        var expires = DateTime.Now.AddMinutes(_settings.ExpireMinutes);
         var ipAdress = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
         var userAgent = httpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString() ?? "Unknown Device";
 
@@ -30,15 +34,15 @@ public class TokenService(
             ExpiresAt = expires
         };
 
-        _context.UserSessions.Add(session);
-        await _context.SaveChangesAsync();
+        context.UserSessions.Add(session);
+        await context.SaveChangesAsync();
 
-        var keyBytes = Encoding.UTF8.GetBytes(
-            Environment.ExpandEnvironmentVariables(config["Jwt:Key"] ?? "")
-        );
+        var keyBytes = Encoding.UTF8.GetBytes(_settings.Key);
 
-        if (keyBytes == null) throw new Exception("Invalid JWT Key.");
-        if (keyBytes.Length < 16) throw new Exception("JWT Key must be at least 16 bytes long.");
+        if (keyBytes == null || keyBytes.Length == 0 || keyBytes.Length < 16)
+        {
+            throw new Exception($"JWT Key is too short.");
+        }
 
         var key = new SymmetricSecurityKey(keyBytes);
 
@@ -53,8 +57,8 @@ public class TokenService(
         };
 
         var token = new JwtSecurityToken(
-            issuer: Environment.ExpandEnvironmentVariables(config["Jwt:Issuer"] ?? ""),
-            audience: Environment.ExpandEnvironmentVariables(config["Jwt:Audience"] ?? ""),
+            issuer: _settings.Issuer,
+            audience: _settings.Audience,
             claims: claims,
             expires: expires,
             signingCredentials: creds
