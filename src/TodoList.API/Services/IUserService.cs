@@ -4,5 +4,5 @@ namespace TodoList.API.Services;
 
 public interface IUserService
 {
-    Task<UserResponseDto?> GetUserByIdAsync(Guid id);
+    Task<UserResponseDto?> GetUserByPidAsync(Guid pid);
 }

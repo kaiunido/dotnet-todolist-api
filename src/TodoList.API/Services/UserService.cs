@@ -6,7 +6,7 @@ namespace TodoList.API.Services;
 
 public class UserService(AppDbContext context) : IUserService
 {
-    public async Task<UserResponseDto?> GetUserByIdAsync(Guid pid)
+    public async Task<UserResponseDto?> GetUserByPidAsync(Guid pid)
     {
         var dbUser = await context.Users
             .AsNoTracking()

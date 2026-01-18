@@ -14,7 +14,7 @@ public class UsersController(
     [HttpGet("{pid:guid}")]
     public async Task<ActionResult<UserResponseDto>> GetById(Guid pid)
     {
-        var user = await userService.GetUserByIdAsync(pid);
+        var user = await userService.GetUserByPidAsync(pid);
 
         if (user == null) return NotFound();
 
