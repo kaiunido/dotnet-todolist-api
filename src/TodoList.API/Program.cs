@@ -4,6 +4,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using TodoList.API.Configurations;
 using TodoList.API.Data;
@@ -31,7 +32,37 @@ builder.Services.AddOptions<JwtSettings>()
     .ValidateOnStart();
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Components ??= new OpenApiComponents();
+
+        document.Components.SecuritySchemes ??=
+            new Dictionary<string, IOpenApiSecurityScheme>();
+
+        document.Components.SecuritySchemes["BearerAuth"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header,
+            Name = "Authorization",
+            Description = "Add your JWT (Bearer <token>)"
+        };
+
+        document.Security ??= new List<OpenApiSecurityRequirement>();
+
+        var schemeRef = new OpenApiSecuritySchemeReference("BearerAuth");
+        document.Security.Add(new OpenApiSecurityRequirement
+        {
+            [schemeRef] = new List<string>()
+        });
+
+        return Task.CompletedTask;
+    });
+});
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(
     connectionString
@@ -84,7 +115,10 @@ app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapScalarApiReference(options => options
+        .AddPreferredSecuritySchemes("BearerAuth")
+        .AddHttpAuthentication("BearerAuth", auth => {})
+    );
 }
 
 app.UseHttpsRedirection();
