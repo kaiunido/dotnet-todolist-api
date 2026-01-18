@@ -22,27 +22,21 @@ public class TokenService(
     {
         var jti = Guid.NewGuid();
         var expires = DateTime.UtcNow.AddMinutes(_settings.ExpireMinutes);
-        var ipAdress = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+        var ipAddress = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
         var userAgent = httpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString() ?? "Unknown Device";
+        var keyBytes = Encoding.UTF8.GetBytes(_settings.Key);
 
         var session = new UserSession
         {
             Jti = jti,
             UserId = user.Id,
             DeviceInfo = deviceInfo ?? userAgent,
-            IpAddress = ipAdress,
+            IpAddress = ipAddress,
             ExpiresAt = expires
         };
 
         context.UserSessions.Add(session);
         await context.SaveChangesAsync();
-
-        var keyBytes = Encoding.UTF8.GetBytes(_settings.Key);
-
-        if (keyBytes == null || keyBytes.Length == 0 || keyBytes.Length < 16)
-        {
-            throw new Exception($"JWT Key is too short.");
-        }
 
         var key = new SymmetricSecurityKey(keyBytes);
 
@@ -53,7 +47,7 @@ public class TokenService(
             new Claim(JwtRegisteredClaimNames.Sub, user.Pid.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, jti.ToString()),
-            new Claim("name", user.Name)
+            new Claim(ClaimTypes.Name, user.Name)
         };
 
         var token = new JwtSecurityToken(
