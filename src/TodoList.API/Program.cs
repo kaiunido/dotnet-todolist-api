@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using TodoList.API.Configurations;
 using TodoList.API.Data;
+using TodoList.API.Handlers;
 using TodoList.API.Middlewares;
 using TodoList.API.Services;
 using TodoList.API.Validators;
@@ -45,6 +46,9 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services
     .AddValidatorsFromAssemblyContaining<IAssemblyMarker>();
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -61,5 +65,7 @@ app.UseMiddleware<TokenSessionMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseExceptionHandler();
 
 app.Run();
