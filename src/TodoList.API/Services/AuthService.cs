@@ -7,12 +7,12 @@ using TodoList.API.Models;
 namespace TodoList.API.Services;
 
 public class AuthService(
-    AppDbContext _context,
-    ITokenService _tokenService
+    AppDbContext context,
+    ITokenService tokenService
 ) : IAuthService {
     public async Task<AuthResponseDto> RegisterAsync(UserRegisterDto userRegisterDto)
     {
-        var userExists = await _context.Users.AnyAsync(u => u.Email == userRegisterDto.Email);
+        var userExists = await context.Users.AnyAsync(u => u.Email == userRegisterDto.Email);
 
         if (userExists) throw new ConflictException("User already exists.");
 
@@ -24,8 +24,8 @@ public class AuthService(
             PasswordHash = hashedPassword
         };
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
 
         return await LoginAsync(new LoginDto
         {
@@ -37,14 +37,14 @@ public class AuthService(
     public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
     {
         // Make login with generating token with JwtBearer
-        var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == loginDto.Email);
+        var user = await context.Users.SingleOrDefaultAsync(u => u.Email == loginDto.Email);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
         {
             throw new UnauthorizedAccessException("Invalid email or password.");
         }
 
-        var token = await _tokenService.GenerateTokenAsync(user);
+        var token = await tokenService.GenerateTokenAsync(user);
 
         return new AuthResponseDto
         {
@@ -61,13 +61,13 @@ public class AuthService(
 
     public async Task<bool> LogoutAsync(Guid jti)
     {
-        var session = await _context.UserSessions
+        var session = await context.UserSessions
             .FirstOrDefaultAsync(s => s.Jti == jti);
 
         if (session == null) return false;
 
-        _context.UserSessions.Remove(session);
-        await _context.SaveChangesAsync();
+        context.UserSessions.Remove(session);
+        await context.SaveChangesAsync();
 
         return true;
     }

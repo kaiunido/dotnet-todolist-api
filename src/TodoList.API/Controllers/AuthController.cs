@@ -1,9 +1,7 @@
-using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoList.API.DTOs;
 using TodoList.API.Services;
-using TodoList.API.Validators;
 
 namespace TodoList.API.Controllers;
 

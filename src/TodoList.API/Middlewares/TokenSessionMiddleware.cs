@@ -6,7 +6,7 @@ namespace TodoList.API.Middlewares;
 
 public class TokenSessionMiddleware(RequestDelegate next)
 {
-    public async Task InvokeAsync(HttpContext context, AppDbContext _dbContext)
+    public async Task InvokeAsync(HttpContext context, AppDbContext dbContext)
     {
         // If user is not authenticated continue
         if (context.User.Identity?.IsAuthenticated != true)
@@ -25,8 +25,8 @@ public class TokenSessionMiddleware(RequestDelegate next)
             return;
         }
 
-        // Check if session exists on database
-        var sessionExists = await _dbContext.UserSessions
+        // Check if the session exists on a database
+        var sessionExists = await dbContext.UserSessions
             .AsNoTracking()
             .AnyAsync(s =>
                 s.Jti == Guid.Parse(jtiClaim) && s.ExpiresAt > DateTime.Now);

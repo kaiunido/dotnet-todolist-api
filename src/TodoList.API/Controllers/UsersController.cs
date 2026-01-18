@@ -7,12 +7,12 @@ namespace TodoList.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class UsersController(
-    IUserService _userService
+    IUserService userService
 ) : ControllerBase {
     [HttpGet("{pid:guid}")]
     public async Task<ActionResult<UserResponseDto>> GetById(Guid pid)
     {
-        var user = await _userService.GetUserByIdAsync(pid);
+        var user = await userService.GetUserByIdAsync(pid);
 
         if (user == null) return NotFound();
 

@@ -4,11 +4,11 @@ using TodoList.API.DTOs;
 
 namespace TodoList.API.Services;
 
-public class UserService(AppDbContext _context) : IUserService
+public class UserService(AppDbContext context) : IUserService
 {
     public async Task<UserResponseDto?> GetUserByIdAsync(Guid pid)
     {
-        var dbUser = await _context.Users
+        var dbUser = await context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Pid == pid);
 
