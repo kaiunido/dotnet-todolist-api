@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TodoList.API.Data;
 using TodoList.API.DTOs;
+using TodoList.API.Exceptions;
 using TodoList.API.Models;
 
 namespace TodoList.API.Services;
@@ -11,6 +12,10 @@ public class AuthService(
 ) : IAuthService {
     public async Task<AuthResponseDto> RegisterAsync(UserRegisterDto userRegisterDto)
     {
+        var userExists = await _context.Users.AnyAsync(u => u.Email == userRegisterDto.Email);
+
+        if (userExists) throw new ConflictException("User already exists.");
+
         var hashedPassword = HashPassword(userRegisterDto.Password);
         var user = new User
         {
