@@ -2,6 +2,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using TodoList.API.Configurations;
 using TodoList.API.Data;
 using TodoList.API.Middlewares;
 using TodoList.API.Services;
@@ -20,6 +21,11 @@ var connectionString = $"Server={Environment.GetEnvironmentVariable("DB_HOST")};
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddOptions<JwtSettings>()
+    .Bind(builder.Configuration.GetSection(JwtSettings.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
