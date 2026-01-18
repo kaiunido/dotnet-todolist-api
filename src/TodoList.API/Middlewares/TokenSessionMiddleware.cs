@@ -19,9 +19,12 @@ public class TokenSessionMiddleware(RequestDelegate next)
         var jtiClaim =
             context.User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
-        if (string.IsNullOrEmpty(jtiClaim))
+        if (!Guid.TryParse(jtiClaim, out var jti))
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsJsonAsync(
+                new { title = "Unauthorized", message = "Invalid token identifier." }
+            );
             return;
         }
 
@@ -29,11 +32,14 @@ public class TokenSessionMiddleware(RequestDelegate next)
         var sessionExists = await dbContext.UserSessions
             .AsNoTracking()
             .AnyAsync(s =>
-                s.Jti == Guid.Parse(jtiClaim) && s.ExpiresAt > DateTime.Now);
+                s.Jti == jti && s.ExpiresAt > DateTime.UtcNow);
 
         if (!sessionExists)
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsJsonAsync(
+                new { title = "Unauthorized", message = "Session expired or revoked." }
+            );
             return;
         }
 

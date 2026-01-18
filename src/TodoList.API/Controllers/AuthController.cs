@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoList.API.DTOs;
@@ -34,13 +36,18 @@ public class AuthController(IAuthService _authService) : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
-        var jtiClaim = User
-            .FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames
-                .Jti)?.Value;
+        var jtiClaim = User.FindFirstValue(JwtRegisteredClaimNames.Jti);
 
-        if (string.IsNullOrEmpty(jtiClaim)) return BadRequest();
+        if (!Guid.TryParse(jtiClaim, out var jti))
+        {
+            return Unauthorized(new
+            {
+                title = "Unauthorized",
+                message = "Invalid token identifier."
+            });
+        }
 
-        await _authService.LogoutAsync(Guid.Parse(jtiClaim));
+        await _authService.LogoutAsync(jti);
 
         return NoContent();
     }
