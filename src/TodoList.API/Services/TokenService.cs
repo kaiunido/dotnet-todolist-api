@@ -33,9 +33,14 @@ public class TokenService(
         _context.UserSessions.Add(session);
         await _context.SaveChangesAsync();
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+        var keyBytes = Encoding.UTF8.GetBytes(
             Environment.ExpandEnvironmentVariables(config["Jwt:Key"] ?? "")
-        ));
+        );
+
+        if (keyBytes == null) throw new Exception("Invalid JWT Key.");
+        if (keyBytes.Length < 16) throw new Exception("JWT Key must be at least 16 bytes long.");
+
+        var key = new SymmetricSecurityKey(keyBytes);
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
