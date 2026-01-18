@@ -21,7 +21,7 @@ public class TokenService(
     public async Task<string> GenerateTokenAsync(User user, string? deviceInfo = null)
     {
         var jti = Guid.NewGuid();
-        var expires = DateTime.Now.AddMinutes(_settings.ExpireMinutes);
+        var expires = DateTime.UtcNow.AddMinutes(_settings.ExpireMinutes);
         var ipAdress = httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
         var userAgent = httpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString() ?? "Unknown Device";
 
