@@ -1,6 +1,9 @@
+using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using TodoList.API.Configurations;
 using TodoList.API.Data;
@@ -35,7 +38,31 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(
 ));
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddAuthentication();
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme =
+            JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        var settings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = settings?.Issuer,
+            ValidAudience = settings?.Audience,
+            IssuerSigningKey =
+                new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(settings?.Key ?? ""))
+        };
+    });
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -51,6 +78,8 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -65,7 +94,5 @@ app.UseMiddleware<TokenSessionMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.UseExceptionHandler();
 
 app.Run();
