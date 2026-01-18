@@ -8,18 +8,28 @@ public class GlobalExceptionHandler : IExceptionHandler
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception,
         CancellationToken cancellationToken)
     {
-        var response = exception switch
+        var (statusCode, title) = exception switch
         {
-            ConflictException => (StatusCode: 409, Title: "Conflict"),
-            NotFoundException => (StatusCode: 404, Title: "Not Found"),
-            _ => (StatusCode: 500, Title: "Internal Server Error")
+            // Application domain exceptions
+            ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
+            NotFoundException => (StatusCodes.Status404NotFound, "Not Found"),
+            UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
+
+            // Validation exceptions
+            FluentValidation.ValidationException => (StatusCodes.Status400BadRequest, "Validation Error"),
+            ArgumentException or FormatException => (StatusCodes.Status400BadRequest, "Bad Request"),
+
+            // Other exceptions
+            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
         };
 
-        httpContext.Response.StatusCode = response.StatusCode;
+        httpContext.Response.StatusCode = statusCode;
+
         await httpContext.Response.WriteAsJsonAsync(
-            new {
-                response.Title,
-                exception.Message
+            new
+            {
+                title,
+                message = exception.Message
             },
             cancellationToken
         );
