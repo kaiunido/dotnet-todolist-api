@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoList.API.DTOs;
 using TodoList.API.Services;
@@ -6,6 +7,7 @@ namespace TodoList.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UsersController(
     IUserService userService
 ) : ControllerBase {
