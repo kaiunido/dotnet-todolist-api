@@ -64,4 +64,39 @@ public class ProfileController(
 
         return Ok(updatedUser);
     }
+
+    [HttpPatch("password")]
+    public async Task<IActionResult> ChangePassword(
+        [FromBody] ChangePasswordDto changePasswordDto)
+    {
+        if (!User.TryGetUserPid(out var userPid))
+        {
+            return Unauthorized(new
+            {
+                title = "Unauthorized", message = "Invalid user identifier."
+            });
+        }
+
+        var deviceInfo = Request.Headers.UserAgent.ToString();
+        if (string.IsNullOrWhiteSpace(deviceInfo))
+        {
+            deviceInfo = "Unknown Device";
+        }
+
+        var response = await userService.ChangePasswordAsync(
+            userPid,
+            changePasswordDto,
+            deviceInfo
+        );
+
+        if (response is null)
+        {
+            return NotFound(new
+            {
+                title = "Not Found", message = "User not found."
+            });
+        }
+
+        return Ok(response);
+    }
 }

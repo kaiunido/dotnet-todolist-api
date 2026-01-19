@@ -5,7 +5,11 @@ using TodoList.API.Exceptions;
 
 namespace TodoList.API.Services;
 
-public class UserService(AppDbContext context) : IUserService
+public class UserService(
+    AppDbContext context,
+    IPasswordHasher passwordHasher,
+    ITokenService tokenService
+) : IUserService
 {
     public async Task<UserResponseDto?> GetUserByPidAsync(Guid pid)
     {
@@ -57,5 +61,45 @@ public class UserService(AppDbContext context) : IUserService
         await context.SaveChangesAsync();
 
         return await GetUserByPidAsync(userPid);
+    }
+
+    public async Task<AuthResponseDto?> ChangePasswordAsync(Guid userPid,
+        ChangePasswordDto changePasswordDto, string deviceInfo)
+    {
+        var user =
+            await context.Users.FirstOrDefaultAsync(u => u.Pid == userPid);
+
+        if (user is null)
+        {
+            throw new NotFoundException("User not found.");
+        }
+
+        if (!passwordHasher.Verify(changePasswordDto.CurrentPassword,
+                user.PasswordHash))
+        {
+            throw new UnauthorizedAccessException("Invalid current password.");
+        }
+
+        user.PasswordHash = passwordHasher.Hash(changePasswordDto.NewPassword);
+
+        await context.SaveChangesAsync();
+
+        await context.UserSessions
+            .Where(s => s.UserId == user.Id)
+            .ExecuteDeleteAsync();
+
+        var token = await tokenService.GenerateTokenAsync(user, deviceInfo);
+
+        return new AuthResponseDto
+        {
+            Token = token,
+            User = new UserResponseDto
+            {
+                Pid = user.Pid,
+                Name = user.Name,
+                Email = user.Email,
+                CreatedAt = user.CreatedAt
+            }
+        };
     }
 }
