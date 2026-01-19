@@ -7,7 +7,7 @@ using TodoList.API.Services;
 namespace TodoList.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 public class AuthController(IAuthService _authService) : ControllerBase
 {
     [HttpPost("login")]

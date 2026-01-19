@@ -7,7 +7,7 @@ using TodoList.API.Services;
 namespace TodoList.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/profile")]
 [Authorize]
 public class ProfileController(
     IUserService userService

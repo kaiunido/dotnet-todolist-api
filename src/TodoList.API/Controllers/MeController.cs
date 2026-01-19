@@ -8,7 +8,7 @@ namespace TodoList.API.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/me")]
 public class MeController(IUserService userService) : ControllerBase
 {
     [HttpGet]
