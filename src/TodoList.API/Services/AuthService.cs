@@ -8,13 +8,20 @@ namespace TodoList.API.Services;
 
 public class AuthService(
     AppDbContext context,
-    ITokenService tokenService
-) : IAuthService {
-    public async Task<AuthResponseDto> RegisterAsync(UserRegisterDto userRegisterDto)
+    ITokenService tokenService,
+    IHttpContextAccessor httpContextAccessor
+) : IAuthService
+{
+    public async Task<AuthResponseDto> RegisterAsync(
+        UserRegisterDto userRegisterDto)
     {
-        var userExists = await context.Users.AnyAsync(u => u.Email == userRegisterDto.Email);
+        var userExists =
+            await context.Users.AnyAsync(u => u.Email == userRegisterDto.Email);
 
-        if (userExists) throw new ConflictException("User already exists.");
+        if (userExists)
+        {
+            throw new ConflictException("User already exists.");
+        }
 
         var hashedPassword = HashPassword(userRegisterDto.Password);
         var user = new User
@@ -36,15 +43,22 @@ public class AuthService(
 
     public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
     {
-        // Make login with generating token with JwtBearer
-        var user = await context.Users.SingleOrDefaultAsync(u => u.Email == loginDto.Email);
+        var user =
+            await context.Users.SingleOrDefaultAsync(u =>
+                u.Email == loginDto.Email);
 
-        if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
+        if (user is null ||
+            !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
         {
             throw new UnauthorizedAccessException("Invalid email or password.");
         }
 
-        var token = await tokenService.GenerateTokenAsync(user);
+        var deviceInfo = ResolveDeviceInfo();
+
+        await DeleteExpiredSessionsForUserAsync(user.Id);
+        await DeleteSessionsForDeviceAsync(user.Id, deviceInfo);
+
+        var token = await tokenService.GenerateTokenAsync(user, deviceInfo);
 
         return new AuthResponseDto
         {
@@ -64,7 +78,10 @@ public class AuthService(
         var session = await context.UserSessions
             .FirstOrDefaultAsync(s => s.Jti == jti);
 
-        if (session == null) return false;
+        if (session == null)
+        {
+            return false;
+        }
 
         context.UserSessions.Remove(session);
         await context.SaveChangesAsync();
@@ -77,5 +94,30 @@ public class AuthService(
         var salt = BCrypt.Net.BCrypt.GenerateSalt();
 
         return BCrypt.Net.BCrypt.HashPassword(password, salt);
+    }
+
+    private string ResolveDeviceInfo(string? deviceInfoFromRequest = null)
+    {
+        var userAgent = httpContextAccessor.HttpContext?.Request.Headers
+            .UserAgent.ToString();
+
+        return deviceInfoFromRequest ?? userAgent ?? "Unknown Device";
+    }
+
+    private Task<int> DeleteSessionsForDeviceAsync(int userId,
+        string deviceInfo,
+        CancellationToken cancellationToken = default)
+    {
+        return context.UserSessions
+            .Where(s => s.UserId == userId && s.DeviceInfo == deviceInfo)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
+    private Task<int> DeleteExpiredSessionsForUserAsync(int userId,
+        CancellationToken ct = default)
+    {
+        return context.UserSessions
+            .Where(s => s.UserId == userId && s.ExpiresAt <= DateTime.UtcNow)
+            .ExecuteDeleteAsync(ct);
     }
 }
