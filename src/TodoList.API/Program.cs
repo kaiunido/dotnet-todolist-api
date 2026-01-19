@@ -1,4 +1,5 @@
 using System.Text;
+using DotNetEnv;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,16 +14,17 @@ using TodoList.API.Middlewares;
 using TodoList.API.Services;
 using TodoList.API.Validators;
 
-DotNetEnv.Env.TraversePath().Load();
+Env.TraversePath().Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = $"Server={Environment.GetEnvironmentVariable("DB_HOST")};" +
-                       $"Port={Environment.GetEnvironmentVariable("DB_PORT")};" +
-                       $"Database={Environment.GetEnvironmentVariable("DB_NAME")};" +
-                       $"Uid={Environment.GetEnvironmentVariable("DB_USER")};" +
-                       $"Pwd={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
-                       "AllowPublicKeyRetrieval=True;";
+var connectionString =
+    $"Server={Environment.GetEnvironmentVariable("DB_HOST")};" +
+    $"Port={Environment.GetEnvironmentVariable("DB_PORT")};" +
+    $"Database={Environment.GetEnvironmentVariable("DB_NAME")};" +
+    $"Uid={Environment.GetEnvironmentVariable("DB_USER")};" +
+    $"Pwd={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
+    "AllowPublicKeyRetrieval=True;";
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -30,6 +32,8 @@ builder.Services.AddOptions<JwtSettings>()
     .Bind(builder.Configuration.GetSection(JwtSettings.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
+
+builder.Services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
 builder.Services.AddControllers();
 
@@ -42,15 +46,16 @@ builder.Services.AddOpenApi(options =>
         document.Components.SecuritySchemes ??=
             new Dictionary<string, IOpenApiSecurityScheme>();
 
-        document.Components.SecuritySchemes["BearerAuth"] = new OpenApiSecurityScheme
-        {
-            Type = SecuritySchemeType.Http,
-            Scheme = "bearer",
-            BearerFormat = "JWT",
-            In = ParameterLocation.Header,
-            Name = "Authorization",
-            Description = "Add your JWT (Bearer <token>)"
-        };
+        document.Components.SecuritySchemes["BearerAuth"] =
+            new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Name = "Authorization",
+                Description = "Add your JWT (Bearer <token>)"
+            };
 
         document.Security ??= new List<OpenApiSecurityRequirement>();
 
@@ -78,7 +83,8 @@ builder.Services.AddAuthentication(options =>
     })
     .AddJwtBearer(options =>
     {
-        var settings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
+        var settings = builder.Configuration.GetSection(JwtSettings.SectionName)
+            .Get<JwtSettings>();
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -117,7 +123,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference(options => options
         .AddPreferredSecuritySchemes("BearerAuth")
-        .AddHttpAuthentication("BearerAuth", auth => {})
+        .AddHttpAuthentication("BearerAuth", auth => { })
     );
 }
 

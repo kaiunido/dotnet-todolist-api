@@ -9,7 +9,8 @@ namespace TodoList.API.Services;
 public class AuthService(
     AppDbContext context,
     ITokenService tokenService,
-    IHttpContextAccessor httpContextAccessor
+    IHttpContextAccessor httpContextAccessor,
+    IPasswordHasher passwordHasher
 ) : IAuthService
 {
     public async Task<AuthResponseDto> RegisterAsync(
@@ -23,7 +24,7 @@ public class AuthService(
             throw new ConflictException("User already exists.");
         }
 
-        var hashedPassword = HashPassword(userRegisterDto.Password);
+        var hashedPassword = passwordHasher.Hash(userRegisterDto.Password);
         var user = new User
         {
             Name = userRegisterDto.Name,
@@ -87,13 +88,6 @@ public class AuthService(
         await context.SaveChangesAsync();
 
         return true;
-    }
-
-    private static string HashPassword(string password)
-    {
-        var salt = BCrypt.Net.BCrypt.GenerateSalt();
-
-        return BCrypt.Net.BCrypt.HashPassword(password, salt);
     }
 
     private string ResolveDeviceInfo(string? deviceInfoFromRequest = null)
