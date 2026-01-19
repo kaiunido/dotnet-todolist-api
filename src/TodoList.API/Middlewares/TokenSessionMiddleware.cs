@@ -1,6 +1,6 @@
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.EntityFrameworkCore;
 using TodoList.API.Data;
+using TodoList.API.Extensions;
 
 namespace TodoList.API.Middlewares;
 
@@ -16,14 +16,15 @@ public class TokenSessionMiddleware(RequestDelegate next)
         }
 
         // If a token is missing or invalid, return 401 Unauthorized
-        var jtiClaim =
-            context.User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
-
-        if (!Guid.TryParse(jtiClaim, out var jti))
+        if (!context.User.TryGetJti(out var jti))
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await context.Response.WriteAsJsonAsync(
-                new { title = "Unauthorized", message = "Invalid token identifier." }
+                new
+                {
+                    title = "Unauthorized",
+                    message = "Invalid token identifier."
+                }
             );
             return;
         }
@@ -38,7 +39,11 @@ public class TokenSessionMiddleware(RequestDelegate next)
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             await context.Response.WriteAsJsonAsync(
-                new { title = "Unauthorized", message = "Session expired or revoked." }
+                new
+                {
+                    title = "Unauthorized",
+                    message = "Session expired or revoked."
+                }
             );
             return;
         }

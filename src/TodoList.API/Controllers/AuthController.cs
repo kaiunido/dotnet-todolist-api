@@ -1,8 +1,7 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoList.API.DTOs;
+using TodoList.API.Extensions;
 using TodoList.API.Services;
 
 namespace TodoList.API.Controllers;
@@ -12,7 +11,8 @@ namespace TodoList.API.Controllers;
 public class AuthController(IAuthService _authService) : ControllerBase
 {
     [HttpPost("login")]
-    public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginDto loginDto)
+    public async Task<ActionResult<AuthResponseDto>> Login(
+        [FromBody] LoginDto loginDto)
     {
         var loginResponse = await _authService.LoginAsync(loginDto);
 
@@ -20,14 +20,15 @@ public class AuthController(IAuthService _authService) : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult<UserResponseDto>> Create([FromBody] UserRegisterDto userRegisterDto)
+    public async Task<ActionResult<UserResponseDto>> Create(
+        [FromBody] UserRegisterDto userRegisterDto)
     {
         var authResponse = await _authService.RegisterAsync(userRegisterDto);
 
         return CreatedAtAction(
             "GetById",
             "Users",
-            new {pid = authResponse.User.Pid},
+            new { pid = authResponse.User.Pid },
             authResponse
         );
     }
@@ -36,9 +37,7 @@ public class AuthController(IAuthService _authService) : ControllerBase
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
-        var jtiClaim = User.FindFirstValue(JwtRegisteredClaimNames.Jti);
-
-        if (!Guid.TryParse(jtiClaim, out var jti))
+        if (!User.TryGetJti(out var jti))
         {
             return Unauthorized(new
             {

@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoList.API.DTOs;
+using TodoList.API.Extensions;
 using TodoList.API.Services;
 
 namespace TodoList.API.Controllers;
@@ -14,9 +14,7 @@ public class MeController(IUserService userService) : ControllerBase
     [HttpGet]
     public async Task<ActionResult<UserResponseDto>> Get()
     {
-        var pidClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (!Guid.TryParse(pidClaim, out var userPid))
+        if (!User.TryGetUserPid(out var userPid))
         {
             return Unauthorized(new
             {
