@@ -7,7 +7,7 @@
     ports:
       - "5001:8080"
     environment:
-      - ConnectionStrings__DefaultConnection=Server=db;Database=todolist;Uid=root;Pwd=${MYSQL_ROOT_PASSWORD};
+      - ConnectionStrings__DefaultConnection=Server=${DB_HOST};Database=${DB_NAME};Uid=${DB_USER};Pwd=${DB_PASSWORD};
     depends_on:
       - db
   db:
@@ -15,8 +15,8 @@
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: todolist
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
     volumes:
       - todolist_db:/var/lib/mysql
 
