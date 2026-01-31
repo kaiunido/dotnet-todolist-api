@@ -9,4 +9,5 @@
   <Folder Name="/src/">
     <Project Path="src/TodoList.API/TodoList.API.csproj" />
   </Folder>
+  <Project Path="tests/TodoList.API.Tests/TodoList.API.Tests.csproj" />
 </Solution>
