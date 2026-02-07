@@ -11,7 +11,93 @@ namespace TodoList.API.Tests.Services;
 public class TaskListServiceTests
 {
     [Fact]
-    public async Task GetAsync_GetTaskListByPid()
+    public async Task GetAllAsync_ShouldReturnTaskLists()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await SeedUserAsync(context);
+        var user2 = await SeedUserAsync(context);
+        var service = new TaskListService(context);
+        await SeedTaskListAsync(context, user.Pid);
+        await SeedTaskListAsync(context, user.Pid);
+        await SeedTaskListAsync(context, user2.Pid);
+
+        var taskLists = await service.GetAllAsync(user.Pid);
+
+        Assert.Equal(2, taskLists.Data.Count);
+        Assert.Equal(2, taskLists.Meta.TotalItems);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldReturnEmptyList()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await SeedUserAsync(context);
+
+        var service = new TaskListService(context);
+        var taskLists = await service.GetAllAsync(user.Pid);
+
+        Assert.Empty(taskLists.Data);
+        Assert.Equal(0, taskLists.Meta.TotalItems);
+        Assert.Equal(1, taskLists.Meta.TotalPages);
+        Assert.Equal(1, taskLists.Meta.Page);
+        Assert.Equal(10, taskLists.Meta.PerPage);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldThrowNotFoundException_ForUser()
+    {
+        await using var context = TestDbContextFactory.Create();
+
+        var service = new TaskListService(context);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(async () =>
+            await service.GetAllAsync(Guid.NewGuid()));
+        Assert.Equal("User not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldDefaultPageAndPerPage_WhenInvalid()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await SeedUserAsync(context);
+        var service = new TaskListService(context);
+        await SeedTaskListAsync(context, user.Pid);
+
+        var taskLists = await service.GetAllAsync(user.Pid, 0, 0);
+        Assert.Single(taskLists.Data);
+        Assert.Equal(1, taskLists.Meta.Page);
+        Assert.Equal(10, taskLists.Meta.PerPage);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldHavePagination()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await SeedUserAsync(context);
+        var user2 = await SeedUserAsync(context);
+        var service = new TaskListService(context);
+        await SeedTaskListAsync(context, user.Pid);
+        await SeedTaskListAsync(context, user.Pid);
+        await SeedTaskListAsync(context, user.Pid);
+        await SeedTaskListAsync(context, user2.Pid);
+
+        var taskLists = await service.GetAllAsync(user.Pid, 2, 1);
+
+        Assert.Equal(1, taskLists.Data.Count);
+        Assert.Equal(3, taskLists.Meta.TotalItems);
+        Assert.Equal(3, taskLists.Meta.TotalPages);
+        Assert.Equal(2, taskLists.Meta.Page);
+        Assert.Equal(1, taskLists.Meta.PerPage);
+        Assert.Equal("/api/task-lists?page=2&perPage=1",
+            taskLists.Meta.Links.Self);
+        Assert.Equal("/api/task-lists?page=3&perPage=1",
+            taskLists.Meta.Links.Next);
+        Assert.Equal("/api/task-lists?page=1&perPage=1",
+            taskLists.Meta.Links.Prev);
+    }
+
+    [Fact]
+    public async Task GetByPidAsync()
     {
         await using var context = TestDbContextFactory.Create();
         var user = await SeedUserAsync(context);
@@ -26,7 +112,8 @@ public class TaskListServiceTests
     }
 
     [Fact]
-    public async Task GetAsync_GetTaskListByPid_ForUser_NotFound()
+    public async Task
+        GetByPidAsync_ShouldThrowNotFoundException_ForUser()
     {
         await using var context = TestDbContextFactory.Create();
         var service = new TaskListService(context);
@@ -38,7 +125,7 @@ public class TaskListServiceTests
     }
 
     [Fact]
-    public async Task GetAsync_GetTaskListByPid_ForTaskList_NotFound()
+    public async Task GetByPidAsync_ShouldThrowNotFoundException_ForTaskList()
     {
         await using var context = TestDbContextFactory.Create();
         var user1 = await SeedUserAsync(context);
@@ -53,7 +140,7 @@ public class TaskListServiceTests
     }
 
     [Fact]
-    public async Task CreateAsync_CreatesTaskList_ForUser()
+    public async Task CreateAsync()
     {
         await using var context = TestDbContextFactory.Create();
         var user = await SeedUserAsync(context);
@@ -74,11 +161,13 @@ public class TaskListServiceTests
 
     private static async Task<User> SeedUserAsync(AppDbContext context)
     {
+        var userPid = Guid.NewGuid();
+
         var user = new User
         {
-            Pid = Guid.NewGuid(),
-            Email = "a@a.com",
-            Name = "Kai",
+            Pid = userPid,
+            Email = $"{userPid}@a.com",
+            Name = $"User {userPid}",
             PasswordHash = "password"
         };
 
@@ -93,10 +182,12 @@ public class TaskListServiceTests
     {
         var user = context.Users.Single(u => u.Pid == userId);
 
+        var taskListPid = Guid.NewGuid();
+
         var taskList = new TaskList
         {
-            Pid = Guid.NewGuid(),
-            Name = "My new task list",
+            Pid = taskListPid,
+            Name = $"My new task list {taskListPid}",
             UserId = user.Id,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

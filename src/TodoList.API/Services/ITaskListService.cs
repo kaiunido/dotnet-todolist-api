@@ -4,6 +4,9 @@ namespace TodoList.API.Services;
 
 public interface ITaskListService
 {
+    Task<PaginationResponse<TaskListResponseDto>> GetAllAsync(Guid userPid,
+        int page = 1, int perPage = 10);
+
     Task<TaskListResponseDto> GetByPidAsync(Guid userPid, Guid taskListPid);
 
     Task<TaskListResponseDto> CreateAsync(
