@@ -18,14 +18,6 @@ Env.TraversePath().Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString =
-    $"Server={Environment.GetEnvironmentVariable("DB_HOST")};" +
-    $"Port={Environment.GetEnvironmentVariable("DB_PORT")};" +
-    $"Database={Environment.GetEnvironmentVariable("DB_NAME")};" +
-    $"Uid={Environment.GetEnvironmentVariable("DB_USER")};" +
-    $"Pwd={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
-    "AllowPublicKeyRetrieval=True;";
-
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOptions<JwtSettings>()
@@ -69,9 +61,20 @@ builder.Services.AddOpenApi(options =>
     });
 });
 
-builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(
-    connectionString
-));
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    var connectionString =
+        $"Server={Environment.GetEnvironmentVariable("DB_HOST")};" +
+        $"Port={Environment.GetEnvironmentVariable("DB_PORT")};" +
+        $"Database={Environment.GetEnvironmentVariable("DB_NAME")};" +
+        $"Uid={Environment.GetEnvironmentVariable("DB_USER")};" +
+        $"Pwd={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
+        "AllowPublicKeyRetrieval=True;";
+
+    builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(
+        connectionString
+    ));
+}
 
 builder.Services.AddHttpContextAccessor();
 
@@ -105,6 +108,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITaskListService, TaskListService>();
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services
