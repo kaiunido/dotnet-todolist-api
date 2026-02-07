@@ -11,8 +11,11 @@ public class
         CustomWebAppApplicationFactory factory
     ) : IntegrationTestBase(factory)
 {
+    private TaskListFixture TaskListFixture => new(WithDb);
+    private UserFixture UserFixture => new(WithDb);
+
     [Fact]
-    public async Task Get_TaskLists_WithoutAuth_ShouldReturnUnauthorized()
+    public async Task Get_WithoutAuth_ShouldReturnUnauthorized()
     {
         await ResetDbAsync();
         var client = CreateClient();
@@ -24,7 +27,7 @@ public class
 
     [Fact]
     public async Task
-        Get_TaskLists_WithAuthButNoSession_ShouldReturnUnauthorized()
+        Get_WithAuthButNoSession_ShouldReturnUnauthorized()
     {
         await ResetDbAsync();
         await SeedUserAsync();
@@ -36,15 +39,12 @@ public class
     }
 
     [Fact]
-    public async Task Get_TaskListsByPid_ShouldReturnOk()
+    public async Task GetByPid_ShouldReturnOk()
     {
         await ResetDbAsync();
         var user = await SeedUserAndSessionAsync();
-
         var client = CreateClient(true);
-
-        var taskLists = new TaskListFixture(WithDb);
-        var createdTaskList = await taskLists.CreateAsync(user.Pid);
+        var createdTaskList = await TaskListFixture.CreateAsync(user.Pid);
 
         var response =
             await client.GetAsync($"/api/task-lists/{createdTaskList.Pid}");
@@ -58,8 +58,35 @@ public class
     }
 
     [Fact]
+    public async Task GetByPid_WithoutSession_ShouldReturnUnauthorized()
+    {
+        await ResetDbAsync();
+        await SeedUserAsync();
+
+        var client = CreateClient(true);
+        var response =
+            await client.GetAsync($"/api/task-lists/{Guid.NewGuid()}");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetByPid_WithAuthButNoAccess_ShouldReturnNotFound()
+    {
+        await ResetDbAsync();
+        await SeedUserAndSessionAsync();
+
+        var user = await UserFixture.CreateAsync();
+        var createdTaskList = await TaskListFixture.CreateAsync(user.Pid);
+
+        var client = CreateClient(true);
+        var response =
+            await client.GetAsync($"/api/task-lists/{createdTaskList.Pid}");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task
-        Post_TaskList_WithValidSession_ShouldCreateAndReturnCreated()
+        Post_WithValidSession_ShouldCreateAndReturnCreated()
     {
         await ResetDbAsync();
         await SeedUserAndSessionAsync();
