@@ -14,9 +14,22 @@ public class TaskListController(
 ) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> Get()
+    public async Task<IActionResult> Get(
+        [FromQuery] int page = 1, [FromQuery] int perPage = 10
+    )
     {
-        return Ok();
+        if (!User.TryGetUserPid(out var userPid))
+        {
+            return Unauthorized(new
+            {
+                title = "Unauthorized", message = "Invalid user identifier."
+            });
+        }
+
+        var response =
+            await taskListService.GetAllAsync(userPid, page, perPage);
+
+        return Ok(response);
     }
 
     [HttpGet("{pid:guid}")]
