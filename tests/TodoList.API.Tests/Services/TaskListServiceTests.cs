@@ -159,6 +159,67 @@ public class TaskListServiceTests
         Assert.Equal("Test List", persisted.Name);
     }
 
+    [Fact]
+    public async Task UpdateAsync_ShouldUpdateWithSuccess()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await SeedUserAsync(context);
+        var service = new TaskListService(context);
+        var taskList = await SeedTaskListAsync(context, user.Pid);
+        var oldUpdatedAt = taskList.UpdatedAt;
+
+        await Task.Delay(5);
+
+        var updated = await service.UpdateAsync(user.Pid, taskList.Pid,
+            new TaskListUpdateDto { Name = "Updated List" });
+        Assert.NotNull(updated);
+        Assert.Equal("Updated List", updated.Name);
+        Assert.True(updated.UpdatedAt >= oldUpdatedAt);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldThrowNotFoundException_ForUser()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var service = new TaskListService(context);
+        var user = await SeedUserAsync(context);
+        var taskList = await SeedTaskListAsync(context, user.Pid);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(async () =>
+            await service.UpdateAsync(Guid.NewGuid(), taskList.Pid,
+                new TaskListUpdateDto { Name = "Updated List" }));
+        Assert.Equal("User not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldThrowNotFoundException_ForTaskList()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await SeedUserAsync(context);
+        var service = new TaskListService(context);
+        await SeedTaskListAsync(context, user.Pid);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(async () =>
+            await service.UpdateAsync(user.Pid, Guid.NewGuid(),
+                new TaskListUpdateDto { Name = "Updated List" }));
+        Assert.Equal("Task list not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldBeUpdatedOnlyByOwner()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user1 = await SeedUserAsync(context);
+        var user2 = await SeedUserAsync(context);
+        var service = new TaskListService(context);
+        var taskList = await SeedTaskListAsync(context, user1.Pid);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(async () =>
+            await service.UpdateAsync(user2.Pid, taskList.Pid,
+                new TaskListUpdateDto { Name = "Updated List" }));
+        Assert.Equal("Task list not found.", ex.Message);
+    }
+
     private static async Task<User> SeedUserAsync(AppDbContext context)
     {
         var userPid = Guid.NewGuid();
