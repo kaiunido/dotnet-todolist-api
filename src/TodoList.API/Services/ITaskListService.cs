@@ -13,4 +13,10 @@ public interface ITaskListService
         Guid userPid,
         TaskListCreateDto taskListCreateDto
     );
+
+    Task<TaskListResponseDto> UpdateAsync(
+        Guid userPid,
+        Guid taskListPid,
+        TaskListUpdateDto updateTaskListDto
+    );
 }

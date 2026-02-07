@@ -69,6 +69,46 @@ public class TaskListService(
         };
     }
 
+    public async Task<TaskListResponseDto> UpdateAsync(
+        Guid userPid,
+        Guid taskListPid,
+        TaskListUpdateDto updateTaskListDto
+    )
+    {
+        var userId =
+            await context.Users
+                .Where(u => u.Pid == userPid)
+                .Select(u => (int?)u.Id)
+                .FirstOrDefaultAsync();
+
+        if (userId is null)
+        {
+            throw new NotFoundException("User not found.");
+        }
+
+        var taskList = await context.TaskLists
+            .SingleOrDefaultAsync(tl =>
+                tl.Pid == taskListPid &&
+                tl.UserId == userId.Value
+            );
+
+        if (taskList is null)
+        {
+            throw new NotFoundException("Task list not found.");
+        }
+
+        taskList.Rename(updateTaskListDto.Name);
+        await context.SaveChangesAsync();
+
+        return new TaskListResponseDto
+        {
+            Pid = taskList.Pid,
+            Name = taskList.Name,
+            CreatedAt = taskList.CreatedAt,
+            UpdatedAt = taskList.UpdatedAt
+        };
+    }
+
     public async Task<PaginationResponse<TaskListResponseDto>> GetAllAsync(
         Guid userPid, int page = 1, int perPage = 10)
     {
