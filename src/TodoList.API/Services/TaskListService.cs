@@ -57,11 +57,7 @@ public class TaskListService(
             throw new NotFoundException("User not found.");
         }
 
-        var taskList = new TaskList
-        {
-            UserId = userId.Value,
-            Name = taskListCreateDto.Name
-        };
+        var taskList = new TaskList(userId.Value, taskListCreateDto.Name);
 
         context.TaskLists.Add(taskList);
         await context.SaveChangesAsync();

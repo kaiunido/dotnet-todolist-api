@@ -20,14 +20,7 @@ public class TaskListFixture(
                 .Select(u => u.Id)
                 .SingleAsync();
 
-            entity = new TaskList
-            {
-                Pid = Guid.NewGuid(),
-                Name = name,
-                UserId = userId,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+            entity = new TaskList(userId, name);
 
             db.TaskLists.Add(entity);
         });

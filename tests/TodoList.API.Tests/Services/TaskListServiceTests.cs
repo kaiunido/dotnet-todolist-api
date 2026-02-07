@@ -83,7 +83,7 @@ public class TaskListServiceTests
 
         var taskLists = await service.GetAllAsync(user.Pid, 2, 1);
 
-        Assert.Equal(1, taskLists.Data.Count);
+        Assert.Single(taskLists.Data);
         Assert.Equal(3, taskLists.Meta.TotalItems);
         Assert.Equal(3, taskLists.Meta.TotalPages);
         Assert.Equal(2, taskLists.Meta.Page);
@@ -178,20 +178,13 @@ public class TaskListServiceTests
     }
 
     private static async Task<TaskList> SeedTaskListAsync(AppDbContext context,
-        Guid userId)
+        Guid userPid)
     {
-        var user = context.Users.Single(u => u.Pid == userId);
+        var user = context.Users.Single(u => u.Pid == userPid);
 
         var taskListPid = Guid.NewGuid();
 
-        var taskList = new TaskList
-        {
-            Pid = taskListPid,
-            Name = $"My new task list {taskListPid}",
-            UserId = user.Id,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        var taskList = new TaskList(user.Id, $"My task list {taskListPid}");
 
         context.TaskLists.Add(taskList);
         await context.SaveChangesAsync();

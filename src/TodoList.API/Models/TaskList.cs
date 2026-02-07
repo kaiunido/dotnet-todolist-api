@@ -2,14 +2,42 @@ namespace TodoList.API.Models;
 
 public class TaskList
 {
-    public int Id { get; init; }
-    public Guid Pid { get; init; } = Guid.NewGuid();
+    private TaskList()
+    {
+        Name = null!;
+    }
 
-    public int UserId { get; init; }
-    public User? User { get; init; }
+    public TaskList(int userId, string name)
+    {
+        UserId = userId;
+        Name = name;
+    }
 
-    public required string Name { get; init; }
-    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
-    public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
-    public DateTime? DeletedAt { get; init; } = null;
+    public int Id { get; private set; }
+    public Guid Pid { get; private set; } = Guid.NewGuid();
+
+    public int UserId { get; private set; }
+    public User? User { get; private set; }
+
+    public string Name { get; private set; }
+    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
+    public DateTime? DeletedAt { get; private set; }
+
+    public void Rename(string name)
+    {
+        Name = name;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void MarkAsDeleted()
+    {
+        if (DeletedAt is not null)
+        {
+            return;
+        }
+
+        DeletedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }
