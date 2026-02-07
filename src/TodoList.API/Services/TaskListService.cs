@@ -10,6 +10,38 @@ public class TaskListService(
     AppDbContext context
 ) : ITaskListService
 {
+    public async Task<TaskListResponseDto> GetByPidAsync(Guid userPid,
+        Guid taskListPid)
+    {
+        var userId = await context.Users
+            .Where(u => u.Pid == userPid)
+            .Select(u => (int?)u.Id)
+            .FirstOrDefaultAsync();
+
+        if (userId is null)
+        {
+            throw new NotFoundException("User not found.");
+        }
+
+        var taskList = await context.TaskLists
+            .Where(tl => tl.Pid == taskListPid)
+            .Where(tl => tl.UserId == userId)
+            .FirstOrDefaultAsync();
+
+        if (taskList is null)
+        {
+            throw new NotFoundException("Task list not found.");
+        }
+
+        return new TaskListResponseDto
+        {
+            Pid = taskList.Pid,
+            Name = taskList.Name,
+            CreatedAt = taskList.CreatedAt,
+            UpdatedAt = taskList.UpdatedAt
+        };
+    }
+
     public async Task<TaskListResponseDto> CreateAsync(
         Guid userPid,
         TaskListCreateDto taskListCreateDto

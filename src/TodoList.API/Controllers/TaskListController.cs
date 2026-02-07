@@ -22,7 +22,18 @@ public class TaskListController(
     [HttpGet("{pid:guid}")]
     public async Task<IActionResult> GetByPid(Guid pid)
     {
-        return Ok();
+        if (!User.TryGetUserPid(out var userPid))
+        {
+            return Unauthorized(new
+            {
+                title = "Unauthorized", message = "Invalid user identifier."
+            });
+        }
+
+        var response =
+            await taskListService.GetByPidAsync(userPid, pid);
+
+        return Ok(response);
     }
 
     [HttpPost]
