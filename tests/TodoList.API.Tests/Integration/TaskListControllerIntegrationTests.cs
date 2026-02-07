@@ -15,6 +15,94 @@ public class
     private UserFixture UserFixture => new(WithDb);
 
     [Fact]
+    public async Task GetAll_WithoutAuth_ShouldReturnUnauthorized()
+    {
+        await ResetDbAsync();
+        var client = CreateClient();
+
+        var response = await client.GetAsync("/api/task-lists");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetAll_WithAuthButNoSession_ShouldReturnUnauthorized()
+    {
+        await ResetDbAsync();
+        await SeedUserAsync();
+
+        var client = CreateClient(true);
+        var response = await client.GetAsync("/api/task-lists");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetAll_ShouldReturnOk()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
+
+        var client = CreateClient(true);
+
+        await TaskListFixture.CreateAsync(user.Pid);
+
+        var response = await client.GetAsync("/api/task-lists");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var taskLists = await response.Content
+            .ReadFromJsonAsync<PaginationResponse<TaskListResponseDto>>();
+        Assert.NotNull(taskLists);
+        Assert.Single(taskLists.Data);
+        Assert.Equal(1, taskLists.Meta.TotalPages);
+        Assert.Equal(1, taskLists.Meta.Page);
+        Assert.Equal(10, taskLists.Meta.PerPage);
+        Assert.Equal("/api/task-lists?page=1&perPage=10",
+            taskLists.Meta.Links.Self);
+        Assert.Null(taskLists.Meta.Links.Prev);
+        Assert.Null(taskLists.Meta.Links.Next);
+    }
+
+    [Fact]
+    public async Task GetAll_ShouldReturnEmptyList()
+    {
+        await ResetDbAsync();
+        await SeedUserAndSessionAsync();
+
+        var client = CreateClient(true);
+
+        var response = await client.GetAsync("/api/task-lists");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var taskLists = await response.Content
+            .ReadFromJsonAsync<PaginationResponse<TaskListResponseDto>>();
+        Assert.NotNull(taskLists);
+        Assert.Empty(taskLists.Data);
+    }
+
+    [Fact]
+    public async Task GetAll_ShouldReturnOnlyCurrentUserItems()
+    {
+        await ResetDbAsync();
+        var user1 = await SeedUserAndSessionAsync();
+
+        var user2 = await UserFixture.CreateAsync();
+        await TaskListFixture.CreateAsync(user1.Pid, "Mine");
+        await TaskListFixture.CreateAsync(user2.Pid, "Not mine");
+
+        var client = CreateClient(true);
+        var response = await client.GetAsync("/api/task-lists");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content
+            .ReadFromJsonAsync<PaginationResponse<TaskListResponseDto>>();
+        Assert.NotNull(body);
+        Assert.Single(body.Data);
+        Assert.Equal("Mine", body.Data[0].Name);
+        Assert.Equal(1, body.Meta.TotalItems);
+    }
+
+    [Fact]
     public async Task Get_WithoutAuth_ShouldReturnUnauthorized()
     {
         await ResetDbAsync();
