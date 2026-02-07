@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using TodoList.API.DTOs;
 using TodoList.API.Tests.Infrastructure;
+using TodoList.API.Tests.Integration.Fixtures;
 
 namespace TodoList.API.Tests.Integration;
 
@@ -37,27 +38,21 @@ public class
     [Fact]
     public async Task Get_TaskListsByPid_ShouldReturnOk()
     {
-        await ResetDbAsync(db => db.TaskLists.RemoveRange(db.TaskLists));
-        await SeedUserAndSessionAsync();
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
 
         var client = CreateClient(true);
 
-        var dto = new TaskListCreateDto
-        {
-            Name = "Market List"
-        };
-
-        var postResponse = await client.PostAsJsonAsync("/api/task-lists", dto);
-        var createdTaskList = await postResponse.Content
-            .ReadFromJsonAsync<TaskListResponseDto>();
+        var taskLists = new TaskListFixture(WithDb);
+        var createdTaskList = await taskLists.CreateAsync(user.Pid);
 
         var response =
             await client.GetAsync($"/api/task-lists/{createdTaskList.Pid}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
         var listedTaskList =
             await response.Content.ReadFromJsonAsync<TaskListResponseDto>();
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.NotNull(response.Content);
+        Assert.NotNull(listedTaskList);
         Assert.Equal(createdTaskList.Pid, listedTaskList.Pid);
         Assert.Equal(createdTaskList.Name, listedTaskList.Name);
     }
@@ -66,7 +61,7 @@ public class
     public async Task
         Post_TaskList_WithValidSession_ShouldCreateAndReturnCreated()
     {
-        await ResetDbAsync(db => db.TaskLists.RemoveRange(db.TaskLists));
+        await ResetDbAsync();
         await SeedUserAndSessionAsync();
 
         var client = CreateClient(true);

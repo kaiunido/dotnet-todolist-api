@@ -26,6 +26,14 @@ public class IntegrationTestBase : IClassFixture<CustomWebAppApplicationFactory>
         return client;
     }
 
+    protected async Task WithDb(Func<AppDbContext, Task> action)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await action(db);
+        await db.SaveChangesAsync();
+    }
+
     protected async Task ResetDbAsync(Action<AppDbContext>? customize = null)
     {
         using var scope = Factory.Services.CreateScope();
@@ -33,6 +41,7 @@ public class IntegrationTestBase : IClassFixture<CustomWebAppApplicationFactory>
 
         await db.Database.EnsureCreatedAsync();
 
+        db.TaskLists.RemoveRange(db.TaskLists);
         db.UserSessions.RemoveRange(db.UserSessions);
         db.Users.RemoveRange(db.Users);
 
