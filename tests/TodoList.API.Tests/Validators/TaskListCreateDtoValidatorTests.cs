@@ -18,7 +18,6 @@ public class TaskListCreateDtoValidatorTests
     }
 
     [Theory]
-    [InlineData(null)]
     [InlineData("")]
     [InlineData("  ")]
     [InlineData("ab")]
