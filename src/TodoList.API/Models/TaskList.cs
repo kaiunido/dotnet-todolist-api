@@ -22,22 +22,10 @@ public class TaskList
     public string Name { get; private set; }
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
-    public DateTime? DeletedAt { get; private set; }
 
     public void Rename(string name)
     {
         Name = name;
-        UpdatedAt = DateTime.UtcNow;
-    }
-
-    public void MarkAsDeleted()
-    {
-        if (DeletedAt is not null)
-        {
-            return;
-        }
-
-        DeletedAt = DateTime.UtcNow;
         UpdatedAt = DateTime.UtcNow;
     }
 }

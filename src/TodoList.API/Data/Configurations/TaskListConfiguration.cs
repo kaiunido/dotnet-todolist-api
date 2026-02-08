@@ -12,7 +12,6 @@ public class TaskListConfiguration : IEntityTypeConfiguration<TaskList>
         builder.Property(tl => tl.Name).HasMaxLength(100).IsRequired();
         builder.Property(tl => tl.CreatedAt).HasDefaultValueSql("GETDATE()");
         builder.Property(tl => tl.UpdatedAt).HasDefaultValueSql("GETDATE()");
-        builder.Property(tl => tl.DeletedAt).HasDefaultValueSql("NULL");
 
         builder.HasOne(tl => tl.User)
             .WithMany()
