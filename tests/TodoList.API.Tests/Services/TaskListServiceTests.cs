@@ -220,6 +220,63 @@ public class TaskListServiceTests
         Assert.Equal("Task list not found.", ex.Message);
     }
 
+    [Fact]
+    public async Task DeleteAsync_ShouldDeleteWithSuccess()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await SeedUserAsync(context);
+        var service = new TaskListService(context);
+        var taskList = await SeedTaskListAsync(context, user.Pid);
+
+        await service.DeleteAsync(user.Pid, taskList.Pid);
+        Assert.False(
+            await context.TaskLists.AnyAsync(tl => tl.Pid == taskList.Pid)
+        );
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldThrowNotFoundException_ForUser()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await SeedUserAsync(context);
+        var service = new TaskListService(context);
+        var taskList = await SeedTaskListAsync(context, user.Pid);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.DeleteAsync(Guid.NewGuid(), taskList.Pid));
+        Assert.Equal("User not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldThrowNotFoundException_ForTaskList()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await SeedUserAsync(context);
+        var service = new TaskListService(context);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.DeleteAsync(user.Pid, Guid.NewGuid()));
+        Assert.Equal("Task list not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldBeDeletedOnlyByOwner()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user1 = await SeedUserAsync(context);
+        var user2 = await SeedUserAsync(context);
+        var service = new TaskListService(context);
+        var taskList = await SeedTaskListAsync(context, user1.Pid);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.DeleteAsync(user2.Pid, taskList.Pid));
+        Assert.Equal("Task list not found.", ex.Message);
+
+        Assert.True(
+            await context.TaskLists.AnyAsync(tl => tl.Pid == taskList.Pid)
+        );
+    }
+
     private static async Task<User> SeedUserAsync(AppDbContext context)
     {
         var userPid = Guid.NewGuid();
