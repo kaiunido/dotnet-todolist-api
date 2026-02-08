@@ -65,7 +65,9 @@ public class TaskListService(
         return new TaskListResponseDto
         {
             Pid = taskList.Pid,
-            Name = taskList.Name
+            Name = taskList.Name,
+            CreatedAt = taskList.CreatedAt,
+            UpdatedAt = taskList.UpdatedAt
         };
     }
 
