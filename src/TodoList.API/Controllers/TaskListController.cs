@@ -71,11 +71,25 @@ public class TaskListController(
         );
     }
 
-    [HttpPatch]
-    public async Task<IActionResult> Update(Guid taskListPid,
-        [FromBody] TaskListUpdateDto updateTaskListDto)
+    [HttpPatch("{pid:guid}")]
+    public async Task<IActionResult> Update(
+        Guid pid,
+        [FromBody] TaskListUpdateDto updateTaskListDto
+    )
     {
-        return Ok();
+        if (!User.TryGetUserPid(out var userPid))
+        {
+            return Unauthorized(new
+            {
+                title = "Unauthorized", message = "Invalid user identifier."
+            });
+        }
+
+        var response =
+            await taskListService.UpdateAsync(userPid, pid,
+                updateTaskListDto);
+
+        return Ok(response);
     }
 
     [HttpDelete]
