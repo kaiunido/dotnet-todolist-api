@@ -172,6 +172,31 @@ public class TaskListService(
         };
     }
 
+    public async Task DeleteAsync(Guid userPid, Guid taskListPid)
+    {
+        var userId = await context.Users
+            .Where(u => u.Pid == userPid)
+            .Select(u => (int?)u.Id)
+            .FirstOrDefaultAsync();
+
+        if (userId is null)
+        {
+            throw new NotFoundException("User not found.");
+        }
+
+        var taskList = await context.TaskLists
+            .SingleOrDefaultAsync(tl =>
+                tl.Pid == taskListPid && tl.UserId == userId.Value);
+
+        if (taskList is null)
+        {
+            throw new NotFoundException("Task list not found.");
+        }
+
+        context.TaskLists.Remove(taskList);
+        await context.SaveChangesAsync();
+    }
+
     private static string Link(int page, int perPage)
     {
         return $"/api/task-lists?page={page}&perPage={perPage}";

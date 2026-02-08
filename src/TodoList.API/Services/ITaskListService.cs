@@ -19,4 +19,6 @@ public interface ITaskListService
         Guid taskListPid,
         TaskListUpdateDto updateTaskListDto
     );
+
+    Task DeleteAsync(Guid userPid, Guid taskListPid);
 }
