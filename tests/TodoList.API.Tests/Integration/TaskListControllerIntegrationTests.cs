@@ -158,7 +158,7 @@ public class
     }
 
     [Fact]
-    public async Task GetByPid_WithAuthButNoAccess_ShouldReturnNotFound()
+    public async Task GetByPid_WithoutAuth_ShouldReturnNotFound()
     {
         await ResetDbAsync();
         await SeedUserAndSessionAsync();
@@ -194,5 +194,64 @@ public class
         Assert.NotNull(body);
         Assert.Equal("Market List", body.Name);
         Assert.NotEqual(Guid.Empty, body.Pid);
+    }
+
+    [Fact]
+    public async Task Update_WithValidSession_ShouldUpdateAndReturnOk()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
+        var client = CreateClient(true);
+        var createdTaskList = await TaskListFixture.CreateAsync(user.Pid);
+
+        var dto = new TaskListUpdateDto
+        {
+            Name = "Updated List"
+        };
+
+        var response = await client.PatchAsJsonAsync(
+            $"/api/task-lists/{createdTaskList.Pid}", dto);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body =
+            await response.Content.ReadFromJsonAsync<TaskListResponseDto>();
+        Assert.NotNull(body);
+        Assert.Equal("Updated List", body.Name);
+    }
+
+    [Fact]
+    public async Task Update_WithoutSession_ShouldReturnUnauthorized()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAsync();
+        var client = CreateClient(true);
+        var createdTaskList = await TaskListFixture.CreateAsync(user.Pid);
+
+        var dto = new TaskListUpdateDto
+        {
+            Name = "Updated List"
+        };
+
+        var response = await client.PatchAsJsonAsync(
+            $"/api/task-lists/{createdTaskList.Pid}", dto);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_WithoutAuth_ShouldReturnUnauthorized()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
+        var client = CreateClient();
+        var createdTaskList = await TaskListFixture.CreateAsync(user.Pid);
+
+        var dto = new TaskListUpdateDto
+        {
+            Name = "Updated List"
+        };
+
+        var response = await client.PatchAsJsonAsync(
+            $"/api/task-lists/{createdTaskList.Pid}", dto);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 }
