@@ -92,9 +92,19 @@ public class TaskListController(
         return Ok(response);
     }
 
-    [HttpDelete]
-    public async Task<IActionResult> Delete(Guid taskListPid)
+    [HttpDelete("{pid:guid}")]
+    public async Task<IActionResult> Delete(Guid pid)
     {
+        if (!User.TryGetUserPid(out var userPid))
+        {
+            return Unauthorized(new
+            {
+                title = "Unauthorized", message = "Invalid user identifier."
+            });
+        }
+
+        await taskListService.DeleteAsync(userPid, pid);
+
         return NoContent();
     }
 }
