@@ -21,7 +21,7 @@ public class TaskItemTests
     }
 
     [Fact]
-    public void UpdateDescription_WithSanemValueAfterTrim_ShouldNotChange()
+    public void UpdateDescription_WithSameValueAfterTrim_ShouldNotChange()
     {
         var task = new TaskItem(1, "test description");
         var oldUpdatedAt = task.UpdatedAt;
