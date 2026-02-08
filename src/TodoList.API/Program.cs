@@ -1,14 +1,17 @@
 using System.Text;
+using System.Text.Json;
 using DotNetEnv;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using TodoList.API.Configurations;
 using TodoList.API.Data;
+using TodoList.API.DTOs;
 using TodoList.API.Handlers;
 using TodoList.API.Middlewares;
 using TodoList.API.Services;
@@ -28,6 +31,20 @@ builder.Services.AddOptions<JwtSettings>()
 builder.Services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
 builder.Services.AddControllers();
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var problem = new ValidationProblemDetails(context.ModelState);
+
+        return new BadRequestObjectResult(new ValidationErrorResponseDto
+        {
+            Title = problem.Title ?? "One or more validation errors occurred.",
+            Errors = problem.Errors
+        });
+    };
+});
 
 builder.Services.AddOpenApi(options =>
 {
@@ -100,6 +117,25 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey =
                 new SymmetricSecurityKey(
                     Encoding.UTF8.GetBytes(settings?.Key ?? ""))
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = context =>
+            {
+                context.HandleResponse();
+
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+
+                var payload = JsonSerializer.Serialize(new
+                {
+                    title = "Unauthorized",
+                    message = "Missing or invalid access token."
+                });
+
+                return context.Response.WriteAsync(payload);
+            }
         };
     });
 
