@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using TodoList.API.DTOs;
 using TodoList.API.Tests.Infrastructure;
 using TodoList.API.Tests.Integration.Fixtures;
@@ -253,5 +254,71 @@ public class
         var response = await client.PatchAsJsonAsync(
             $"/api/task-lists/{createdTaskList.Pid}", dto);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_ShouldReturnNoContent()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
+        var client = CreateClient(true);
+        var createdTaskList = await TaskListFixture.CreateAsync(user.Pid);
+
+        var response =
+            await client.DeleteAsync($"/api/task-lists/{createdTaskList.Pid}");
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        var response2 =
+            await client.DeleteAsync($"/api/task-lists/{createdTaskList.Pid}");
+        Assert.Equal(HttpStatusCode.NotFound, response2.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_WithoutSession_ShouldReturnUnauthorized()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAsync();
+        var client = CreateClient(true);
+        var createdTaskList = await TaskListFixture.CreateAsync(user.Pid);
+
+        var response =
+            await client.DeleteAsync($"/api/task-lists/{createdTaskList.Pid}");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_WithoutAuth_ShouldReturnUnauthorized()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
+        var client = CreateClient();
+        var createdTaskList = await TaskListFixture.CreateAsync(user.Pid);
+
+        var response =
+            await client.DeleteAsync($"/api/task-lists/{createdTaskList.Pid}");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Delete_WithValidSessionButNotOwner_ShouldReturnNotFound()
+    {
+        await ResetDbAsync();
+        await SeedUserAndSessionAsync();
+        var user2 = await UserFixture.CreateAsync();
+        var client = CreateClient(true);
+        var createdTaskList = await TaskListFixture.CreateAsync(user2.Pid);
+
+        var response =
+            await client.DeleteAsync($"/api/task-lists/{createdTaskList.Pid}");
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var stillExists = false;
+        await WithDb(async db =>
+        {
+            stillExists = await db.TaskLists
+                .AnyAsync(tl => tl.Pid == createdTaskList.Pid);
+        });
+
+        Assert.True(stillExists);
     }
 }
