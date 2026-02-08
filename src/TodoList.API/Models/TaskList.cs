@@ -23,6 +23,9 @@ public class TaskList
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
 
+    public ICollection<TaskItem> Tasks { get; private set; } =
+        new List<TaskItem>();
+
     public void Rename(string name)
     {
         Name = name;
