@@ -1,145 +1,161 @@
-# TodoList API – Estudo de API REST com ASP.NET Core (.NET 10)
+# TodoList API – ASP.NET Core REST API Study (.NET 10)
 
-## 📌 Objetivo do Projeto
+## 📌 Project Goal
 
-Projeto desenvolvido como **estudo prático de ASP.NET Core (.NET 10 LTS)**, com
-foco em APIs REST seguras, organização de código e **consolidação de fundamentos
-da plataforma .NET moderna**.
+This project was developed as a **practical study of ASP.NET Core (.NET 10 LTS)
+**,
+with a focus on building secure REST APIs, clean code organization, and
+**consolidating the fundamentals of the modern .NET platform**.
 
-O objetivo é demonstrar domínio progressivo do ecossistema .NET por meio da
-aplicação de conceitos sólidos de backend, como autenticação, middlewares,
-validação, acesso a dados e documentação automatizada.
-
----
-
-## 🧩 Descrição
-
-API focada em performance, simplicidade e clareza de responsabilidades,
-desenvolvida como prova de conceito.
-O projeto aplica princípios de separação de responsabilidades inspirados em *
-*Clean Architecture**, segurança baseada em **JWT com validação de sessão ativa
-** e documentação automatizada via **Scalar**.
+The main goal is to demonstrate progressive mastery of the .NET ecosystem
+through
+the application of solid backend concepts such as authentication, middleware,
+validation, data access, and automated API documentation.
 
 ---
 
-## 🛠️ Stack Tecnológica
+## 🧩 Overview
+
+This API is designed with performance, simplicity, and clear separation of
+responsibilities in mind, serving as a proof of concept.
+
+The project applies responsibility separation principles inspired by
+**Clean Architecture**, security based on **JWT with active session validation
+**,
+and automated API documentation rendered via **Scalar**.
+
+---
+
+## 🛠️ Tech Stack
 
 - **Runtime**: .NET 10 LTS (C# 12+)
-- **Persistência**: MySQL com Entity Framework Core (Code First)
-- **Segurança**: JWT Bearer + controle de sessão ativa via middleware
-- **Validação**: FluentValidation integrado ao pipeline de model binding
-- **Documentação**: OpenAPI gerado via `Microsoft.AspNetCore.OpenApi` e
-  renderizado com Scalar
-- **Utilitários**:
-    - DotNetEnv para gestão de variáveis de ambiente
-    - BCrypt.Net-Next para hashing de senhas
+- **Persistence**: MySQL with Entity Framework Core (Code First)
+- **Security**: JWT Bearer + active session control via middleware
+- **Validation**: FluentValidation integrated into the model binding pipeline
+- **Documentation**: OpenAPI generated via `Microsoft.AspNetCore.OpenApi` and
+  rendered using Scalar
+- **Utilities**:
+    - DotNetEnv for environment variable management
+    - BCrypt.Net-Next for password hashing
 
 ---
 
-## 🧱 Arquitetura e Features Implementadas
+## 🧱 Architecture & Implemented Features
 
-- [x] **Tratamento Global de Erros**  
-  Implementação de `IExceptionHandler` para interceptação de exceções e retorno
-  de payload JSON consistente, evitando vazamento de detalhes internos em
-  produção.
+- [x] **Global Error Handling**  
+  Implementation of `IExceptionHandler` to intercept unhandled exceptions and
+  return consistent JSON payloads, preventing internal detail leakage in
+  production environments.
 
 - [x] **Options Pattern**  
-  Centralização e validação de configurações sensíveis (JWT) durante a
-  inicialização da aplicação.
+  Centralized and validated configuration of sensitive settings (JWT) during
+  application startup.
 
-- [x] **Infraestrutura OpenAPI Customizada**  
-  Uso de `DocumentTransformer` para configuração explícita de esquemas de
-  segurança JWT no pipeline OpenAPI do .NET 10.
+- [x] **Custom OpenAPI Infrastructure**  
+  Use of `DocumentTransformer` for explicit JWT security scheme configuration
+  within the .NET 10 OpenAPI pipeline.
 
-- [x] **Validação de Sessão Ativa**  
-  Middleware posicionado entre Autenticação e Autorização para validação de
-  tokens com base em sessões persistidas (JTI), permitindo revogação de acesso
-  em tempo real.
+- [x] **Active Session Validation**  
+  Middleware positioned between Authentication and Authorization to validate
+  tokens based on persisted sessions (JTI), enabling real-time token revocation.
 
-- [x] **Módulo de Identidade**  
-  Registro, autenticação JWT com sessões persistidas, gestão do perfil do
-  usuário autenticado, troca de senha com invalidação de sessões e endpoint
-  `/me` para verificação de contexto do usuário.
+- [x] **Identity Module**  
+  User registration, JWT authentication with persistent sessions, authenticated
+  profile management, password change with session invalidation, and the `/me`
+  endpoint for retrieving the authenticated user context.
 
-- [ ] **Gestão de Tarefas**  
-  Endpoints CRUD de tarefas vinculadas estritamente ao usuário autenticado.
-
----
-
-## 🔐 Fluxo de Autenticação
-
-1. Usuário realiza login e recebe um **JWT**.
-2. O token contém um **JTI (JWT ID)** único.
-3. A sessão é persistida no banco de dados.
-4. A cada requisição autenticada:
-    - O JWT é validado.
-    - O middleware verifica se a sessão ainda está ativa.
-5. Tokens revogados ou sessões expiradas resultam em **HTTP 401 (Unauthorized)
-   **.
+- [ ] **Task Management**  
+  CRUD endpoints for tasks strictly scoped to the authenticated user.
 
 ---
 
-## 📄 Endpoints (exemplos)
+## 🔐 Authentication Flow
 
-- `POST /api/auth/register` – Registro de usuário
-- `POST /api/auth/login` – Autenticação e emissão de JWT
-- `POST /api/auth/logout` – Revogação da sessão ativa (autenticado)
-- `GET /api/me` – Retorna os dados do usuário autenticado a partir do contexto
-  do token (JWT), utilizado para validação de sessão e inicialização do
-  frontend.
-
-> A lista completa de endpoints pode ser consultada via Scalar.
+1. The user logs in and receives a **JWT**.
+2. The token contains a unique **JTI (JWT ID)**.
+3. The session is persisted in the database.
+4. On each authenticated request:
+    - The JWT is validated.
+    - Middleware verifies whether the session is still active.
+5. Revoked tokens or expired sessions result in **HTTP 401 (Unauthorized)**.
 
 ---
 
-## 🚀 Instruções de Execução
+## 📄 Endpoints (Examples)
 
-### 1. Pré-requisitos
+- `POST /api/auth/register` – User registration
+- `POST /api/auth/login` – Authentication and JWT issuance
+- `POST /api/auth/logout` – Active session revocation (authenticated)
+- `GET /api/me` – Returns the authenticated user data from the JWT context,
+  used for session validation and frontend initialization
 
-- .NET SDK 10 instalado
-- MySQL em execução
+> The full list of endpoints is available via Scalar.
 
-### 2. Configuração de Ambiente
+---
 
-O projeto utiliza variáveis de ambiente centralizadas na **raiz do repositório**
-(antes da pasta `src/`).
+## 🧪 Tests
 
-Utilize o arquivo `.env.example` como referência e crie um arquivo `.env`:
+This project adopts a **layered testing strategy**, separating unit tests from
+integration tests to balance speed, isolation, and realism.
+
+- **Unit tests** focus on business rules and validation logic.
+- **Integration tests** validate the full HTTP pipeline, including
+  authentication,
+  authorization, middleware, and persistence.
+
+📘 A detailed explanation of the testing strategy is available at:  
+👉 **[tests/README.md](tests/README.md)**
+
+---
+
+## 🚀 Running the Project
+
+### 1. Prerequisites
+
+- .NET SDK 10 installed
+- MySQL running locally or via Docker
+
+### 2. Environment Configuration
+
+The project uses environment variables centralized at the **repository root**
+(before the `src/` folder).
+
+Use the `.env.example` file as a reference and create a `.env` file:
 
 ```bash
 cp .env.example .env
 ```
 
-Exemplo de variáveis:
+Example variables:
 
 ```env
 DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=todo_list
 DB_USER=root
-DB_PASSWORD=senha
+DB_PASSWORD=password
 
-Jwt__Key=chave-secreta
+Jwt__Key=secret-key
 Jwt__Issuer=TodoList.API
 Jwt__Audience=TodoList.Client
 Jwt__ExpireMinutes=60
 ```
 
-### 3. Migrações de Banco de Dados
+### 3. Database Migrations
 
-```bash
+```
 dotnet ef database update
 ```
 
-### 4. Execução do Projeto
+### 4. Running the Application
 
-```bash
+```
 dotnet watch run
 ```
 
-### 5. Documentação da API
+### 5. API Documentation
 
-A interface de documentação está disponível em ambiente de **Development**:
+The API documentation UI is available in the **Development** environment:
 
 ```
 /scalar
@@ -147,29 +163,30 @@ A interface de documentação está disponível em ambiente de **Development**:
 
 ---
 
-## 🐳 Docker (Opcional)
+## 🐳 Docker (Optional)
 
-O repositório inclui arquivos auxiliares (`compose.yaml`) para execução do
-ambiente via Docker, facilitando a configuração de dependências como o banco de
-dados.
-
----
-
-## ✅ Padrões de Qualidade
-
-- **Tipagem Forte**: Uso de DTOs com validação explícita e inicialização
-  segura (`required` / `init` quando aplicável).
-- **Segurança**:
-    - Hashing de senhas com BCrypt
-    - Política de Zero-Leak para stack traces em produção
-- **Extensibilidade**:
-    - Configuração de OpenAPI desacoplada via `DocumentTransformer`
-    - Middlewares customizados para regras de negócio transversais
+This repository includes auxiliary files (`compose.yaml`) to run the environment
+using Docker, simplifying dependency setup such as the database.
 
 ---
 
-## 📚 Observações Finais
+## ✅ Quality Standards
 
-Este projeto é voltado para **consolidação de fundamentos e exploração prática**
-da plataforma .NET moderna, servindo como base para evolução contínua e
-aprofundamento em cenários reais de produção.
+* **Strong Typing**: DTOs with explicit validation and safe initialization (
+  `required` / `init` where applicable).
+* **Security**:
+
+    * Password hashing using BCrypt
+    * Zero-leak policy for stack traces in production
+* **Extensibility**:
+
+    * Decoupled OpenAPI configuration via `DocumentTransformer`
+    * Custom middlewares for cross-cutting business rules
+
+---
+
+## 📚 Final Notes
+
+This project is intended for **fundamental consolidation and hands-on
+exploration** of the modern .NET platform, serving as a foundation for
+continuous evolution and deeper exploration of real-world production scenarios.

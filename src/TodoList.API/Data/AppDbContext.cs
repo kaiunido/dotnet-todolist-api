@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 {
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<UserSession> UserSessions { get; set; } = null!;
+    public DbSet<TaskList> TaskLists { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

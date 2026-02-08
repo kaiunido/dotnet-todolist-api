@@ -5,8 +5,10 @@
     <File Path=".gitignore" />
     <File Path="compose.yaml" />
     <File Path="README.md" />
+    <File Path="tests/README.md" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/TodoList.API/TodoList.API.csproj" />
   </Folder>
+  <Project Path="tests/TodoList.API.Tests/TodoList.API.Tests.csproj" />
 </Solution>
