@@ -131,6 +131,95 @@ public class TaskItemServiceTests
     }
 
     [Fact]
+    public async Task GetByPidAsync_ShouldReturnTaskItem()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        var taskItem =
+            await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+
+        var service = new TaskItemService(context);
+
+        var taskItemDto =
+            await service.GetByPidAsync(user.Pid, taskList.Pid, taskItem.Pid);
+
+        Assert.NotNull(taskItemDto);
+        Assert.Equal(taskItem.Pid, taskItemDto.Pid);
+        Assert.Equal(taskList.Pid, taskItemDto.TaskListPid);
+        Assert.Equal(taskItem.Description, taskItemDto.Description);
+    }
+
+    [Fact]
+    public async Task GetByPidAsync_ShouldThrow_ForUserNotFound()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        var taskItem =
+            await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+        var service = new TaskItemService(context);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.GetByPidAsync(Guid.NewGuid(), taskList.Pid, taskItem.Pid)
+        );
+
+        Assert.Equal("User not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task GetByPidAsync_ShouldThrow_ForTaskListNotFound()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        var taskItem =
+            await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+        var service = new TaskItemService(context);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.GetByPidAsync(user.Pid, Guid.NewGuid(), taskItem.Pid)
+        );
+
+        Assert.Equal("Task list not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task GetByPidAsync_ShouldThrow_ForTaskNotFound()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        var service = new TaskItemService(context);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.GetByPidAsync(user.Pid, taskList.Pid, Guid.NewGuid())
+        );
+
+        Assert.Equal("Task item not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task GetByPidAsync_ShouldThrow_ForTaskFromAnotherList()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+
+        var list1 = await TaskListFixture.SeedAsync(context, user.Id, "List 1");
+        var list2 = await TaskListFixture.SeedAsync(context, user.Id, "List 2");
+
+        var itemInList2 = await TaskItemFixture.SeedAsync(context, list2.Id, "Item 2");
+
+        var service = new TaskItemService(context);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.GetByPidAsync(user.Pid, list1.Pid, itemInList2.Pid)
+        );
+
+        Assert.Equal("Task item not found.", ex.Message);
+    }
+
+    [Fact]
     public async Task CreateAsync_ShouldCreateTaskWithSuccess()
     {
         await using var context = TestDbContextFactory.Create();
