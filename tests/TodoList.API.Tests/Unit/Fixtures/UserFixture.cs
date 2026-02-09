@@ -29,11 +29,13 @@ public class UserFixture
 
     public static async Task<User> SeedDefaultAsync(AppDbContext context)
     {
+        var pid = Guid.NewGuid();
+
         return await SeedAsync(
             context,
-            Guid.NewGuid(),
-            "Test User",
-            "test@test.com",
+            pid,
+            $"Test User {pid}",
+            $"test{pid}@test.com",
             "password"
         );
     }

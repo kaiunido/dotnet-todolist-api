@@ -89,13 +89,7 @@ public class TaskItemServiceTests
     {
         await using var context = TestDbContextFactory.Create();
         var user = await UserFixture.SeedDefaultAsync(context);
-        var otherUser = await UserFixture.SeedAsync(
-            context,
-            Guid.NewGuid(),
-            "Other User",
-            "otherUser@test.com",
-            "password"
-        );
+        var otherUser = await UserFixture.SeedDefaultAsync(context);
         var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
         var service = new TaskItemService(context);
 
