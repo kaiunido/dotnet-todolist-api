@@ -76,7 +76,31 @@ public class TaskItemService(
         Guid taskItemPid
     )
     {
-        throw new NotImplementedException();
+        var (_, taskListId) =
+            await CheckTaskListOwnerAsync(userPid, taskListPid);
+
+        var taskItem = await context.TaskItems
+            .Where(ti => ti.TaskListId == taskListId)
+            .Where(ti => ti.Pid == taskItemPid)
+            .Select(ti => new TaskItemResponseDto
+            {
+                Pid = ti.Pid,
+                TaskListPid = taskListPid,
+                Description = ti.Description,
+                IsDone = ti.IsDone,
+                DoneAt = ti.DoneAt,
+                CreatedAt = ti.CreatedAt,
+                UpdatedAt = ti.UpdatedAt
+            })
+            .AsNoTracking()
+            .SingleOrDefaultAsync();
+
+        if (taskItem is null)
+        {
+            throw new NotFoundException("Task item not found.");
+        }
+
+        return taskItem;
     }
 
     public async Task<TaskItemResponseDto> CreateAsync(
