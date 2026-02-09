@@ -10,6 +10,127 @@ namespace TodoList.API.Tests.Unit.Services;
 public class TaskItemServiceTests
 {
     [Fact]
+    public async Task GetAllAsync_ShouldReturnTaskItems()
+    {
+        await using var context = TestDbContextFactory.Create();
+
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+        await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+
+        var user2 = await UserFixture.SeedDefaultAsync(context);
+        var taskList2 =
+            await TaskListFixture.SeedDefaultAsync(context, user2.Id);
+        await TaskItemFixture.SeedDefaultAsync(context, taskList2.Id);
+
+        var service = new TaskItemService(context);
+
+        var taskItems = await service.GetAllAsync(user.Pid, taskList.Pid);
+
+        Assert.Equal(2, taskItems.Data.Count);
+        Assert.Equal(2, taskItems.Meta.TotalItems);
+        Assert.All(taskItems.Data,
+            i => Assert.Equal(taskList.Pid, i.TaskListPid));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldReturnEmptyList()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+
+        var service = new TaskItemService(context);
+        var taskItems = await service.GetAllAsync(user.Pid, taskList.Pid);
+
+        Assert.Empty(taskItems.Data);
+        Assert.Equal(0, taskItems.Meta.TotalItems);
+        Assert.Equal(1, taskItems.Meta.TotalPages);
+        Assert.Equal(1, taskItems.Meta.Page);
+        Assert.Equal(10, taskItems.Meta.PerPage);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldThrow_ForUserNotFound()
+    {
+        await using var context = TestDbContextFactory.Create();
+
+        var service = new TaskItemService(context);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.GetAllAsync(
+                Guid.NewGuid(),
+                Guid.NewGuid()
+            )
+        );
+
+        Assert.Equal("User not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldThrow_ForTaskListNotFound()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+
+        var service = new TaskItemService(context);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.GetAllAsync(
+                user.Pid,
+                Guid.NewGuid()
+            )
+        );
+
+        Assert.Equal("Task list not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldDefaultPageAndPerPage_WhenInvalid()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+
+        var service = new TaskItemService(context);
+
+        var taskItems = await service.GetAllAsync(user.Pid, taskList.Pid, 0, 0);
+
+        Assert.Single(taskItems.Data);
+        Assert.Equal(1, taskItems.Meta.Page);
+        Assert.Equal(10, taskItems.Meta.PerPage);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldHavePagination()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+        await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+        await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+
+        var service = new TaskItemService(context);
+
+        var taskItems = await service.GetAllAsync(user.Pid, taskList.Pid, 2, 1);
+
+        Assert.Single(taskItems.Data);
+        Assert.Equal(2, taskItems.Meta.Page);
+        Assert.Equal(1, taskItems.Meta.PerPage);
+        Assert.Equal(3, taskItems.Meta.TotalPages);
+        Assert.Equal(3, taskItems.Meta.TotalItems);
+        Assert.Equal($"/api/task-lists/{taskList.Pid}/tasks?page=2&perPage=1",
+            taskItems.Meta.Links.Self);
+        Assert.Equal($"/api/task-lists/{taskList.Pid}/tasks?page=3&perPage=1",
+            taskItems.Meta.Links.Next);
+        Assert.Equal($"/api/task-lists/{taskList.Pid}/tasks?page=1&perPage=1",
+            taskItems.Meta.Links.Prev);
+    }
+
+    [Fact]
     public async Task CreateAsync_ShouldCreateTaskWithSuccess()
     {
         await using var context = TestDbContextFactory.Create();
