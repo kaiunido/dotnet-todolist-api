@@ -17,7 +17,57 @@ public class TaskItemService(
         int perPage = 10
     )
     {
-        throw new NotImplementedException();
+        var (_, taskListId) =
+            await CheckTaskListOwnerAsync(userPid, taskListPid);
+
+        var query = context.TaskItems
+            .Where(ti => ti.TaskListId == taskListId)
+            .OrderByDescending(ti => ti.CreatedAt)
+            .ThenByDescending(ti => ti.Id);
+
+        page = page < 1 ? 1 : page;
+        perPage = perPage < 1 ? 10 : perPage;
+        var totalItems = await query.CountAsync();
+        var totalPages =
+            Math.Max(1, (int)Math.Ceiling((double)totalItems / perPage));
+
+        var items = await query
+            .Skip((page - 1) * perPage)
+            .Take(perPage)
+            .Select(i => new TaskItemResponseDto
+            {
+                Pid = i.Pid,
+                TaskListPid = taskListPid,
+                Description = i.Description,
+                IsDone = i.IsDone,
+                DoneAt = i.DoneAt,
+                CreatedAt = i.CreatedAt,
+                UpdatedAt = i.UpdatedAt
+            })
+            .AsNoTracking()
+            .ToListAsync();
+
+        return new PaginationResponse<TaskItemResponseDto>
+        {
+            Data = items,
+            Meta = new PaginationMeta
+            {
+                Page = page,
+                PerPage = perPage,
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                Links = new PaginationMetaLinks
+                {
+                    Self = Link(taskListPid, page, perPage),
+                    Next = page < totalPages
+                        ? Link(taskListPid, page + 1, perPage)
+                        : null,
+                    Prev = page > 1
+                        ? Link(taskListPid, page - 1, perPage)
+                        : null
+                }
+            }
+        };
     }
 
     public async Task<TaskItemResponseDto> GetByPidAsync(
@@ -107,5 +157,11 @@ public class TaskItemService(
             UserId: userId.Value,
             TaskListId: taskListId.Value
         );
+    }
+
+    private static string Link(Guid taskListPid, int page, int perPage)
+    {
+        return
+            $"/api/task-lists/{taskListPid}/tasks?page={page}&perPage={perPage}";
     }
 }
