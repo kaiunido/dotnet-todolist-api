@@ -139,7 +139,32 @@ public class TaskItemService(
         TaskItemCreateDto taskItemUpdateDto
     )
     {
-        throw new NotImplementedException();
+        var (_, taskListId) =
+            await CheckTaskListOwnerAsync(userPid, taskListPid);
+
+        var taskItem = await context.TaskItems
+            .Where(ti => ti.Pid == taskItemPid)
+            .Where(ti => ti.TaskListId == taskListId)
+            .SingleOrDefaultAsync();
+
+        if (taskItem is null)
+        {
+            throw new NotFoundException("Task item not found.");
+        }
+
+        taskItem.UpdateDescription(taskItemUpdateDto.Description);
+        await context.SaveChangesAsync();
+
+        return new TaskItemResponseDto
+        {
+            Pid = taskItem.Pid,
+            TaskListPid = taskListPid,
+            Description = taskItem.Description,
+            IsDone = taskItem.IsDone,
+            DoneAt = taskItem.DoneAt,
+            CreatedAt = taskItem.CreatedAt,
+            UpdatedAt = taskItem.UpdatedAt
+        };
     }
 
     public async Task DeleteAsync(

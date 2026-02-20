@@ -208,7 +208,8 @@ public class TaskItemServiceTests
         var list1 = await TaskListFixture.SeedAsync(context, user.Id, "List 1");
         var list2 = await TaskListFixture.SeedAsync(context, user.Id, "List 2");
 
-        var itemInList2 = await TaskItemFixture.SeedAsync(context, list2.Id, "Item 2");
+        var itemInList2 =
+            await TaskItemFixture.SeedAsync(context, list2.Id, "Item 2");
 
         var service = new TaskItemService(context);
 
@@ -317,5 +318,116 @@ public class TaskItemServiceTests
         );
 
         Assert.Equal("Task list not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldUpdateTaskWithSuccess()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        var taskItem =
+            await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+        var service = new TaskItemService(context);
+
+        var itemDto = new TaskItemCreateDto
+        {
+            Description = "Updated Task"
+        };
+
+        var updatedTaskItem = await service.UpdateAsync(user.Pid, taskList.Pid,
+            taskItem.Pid, itemDto);
+
+        Assert.Equal(taskItem.Pid, updatedTaskItem.Pid);
+        Assert.Equal(taskList.Pid, updatedTaskItem.TaskListPid);
+        Assert.Equal("Updated Task", updatedTaskItem.Description);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldThrow_ForUserNotFound()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        var taskItem =
+            await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+        var service = new TaskItemService(context);
+
+        var itemDto = new TaskItemCreateDto
+        {
+            Description = "Updated Task"
+        };
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.UpdateAsync(Guid.NewGuid(), taskList.Pid, taskItem.Pid,
+                itemDto)
+        );
+
+        Assert.Equal("User not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldThrow_ForTaskListNotFound()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        var taskItem =
+            await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+        var service = new TaskItemService(context);
+
+        var itemDto = new TaskItemCreateDto
+        {
+            Description = "Updated Task"
+        };
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.UpdateAsync(user.Pid, Guid.NewGuid(), taskItem.Pid, itemDto)
+        );
+
+        Assert.Equal("Task list not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldThrow_ForTaskItemNotFound()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        var service = new TaskItemService(context);
+
+        var itemDto = new TaskItemCreateDto
+        {
+            Description = "Updated Task"
+        };
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.UpdateAsync(user.Pid, taskList.Pid, Guid.NewGuid(), itemDto)
+        );
+
+        Assert.Equal("Task item not found.", ex.Message);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldThrow_ForTaskItemFromAnotherList()
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+
+        var list1 = await TaskListFixture.SeedAsync(context, user.Id, "List 1");
+        var list2 = await TaskListFixture.SeedAsync(context, user.Id, "List 2");
+
+        var itemInList2 =
+            await TaskItemFixture.SeedAsync(context, list2.Id, "Item 2");
+
+        var service = new TaskItemService(context);
+
+        var dto = new TaskItemCreateDto { Description = "Updated Task" };
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            service.UpdateAsync(user.Pid, list1.Pid, itemInList2.Pid, dto)
+        );
+
+        Assert.Equal("Task item not found.", ex.Message);
     }
 }
