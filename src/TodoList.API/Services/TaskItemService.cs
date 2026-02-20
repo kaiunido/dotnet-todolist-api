@@ -173,7 +173,21 @@ public class TaskItemService(
         Guid taskItemPid
     )
     {
-        throw new NotImplementedException();
+        var (_, taskListId) =
+            await CheckTaskListOwnerAsync(userPid, taskListPid);
+
+        var taskItem = await context.TaskItems
+            .Where(ti => ti.Pid == taskItemPid)
+            .Where(ti => ti.TaskListId == taskListId)
+            .SingleOrDefaultAsync();
+
+        if (taskItem is null)
+        {
+            throw new NotFoundException("Task item not found.");
+        }
+
+        context.TaskItems.Remove(taskItem);
+        await context.SaveChangesAsync();
     }
 
     private async Task<(int UserId, int TaskListId )> CheckTaskListOwnerAsync(
