@@ -225,6 +225,6 @@ public class TaskItemService(
     private static string Link(Guid taskListPid, int page, int perPage)
     {
         return
-            $"/api/task-lists/{taskListPid}/tasks?page={page}&perPage={perPage}";
+            $"/api/task-lists/{taskListPid}/items?page={page}&perPage={perPage}";
     }
 }

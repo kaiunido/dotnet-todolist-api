@@ -145,6 +145,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITaskListService, TaskListService>();
+builder.Services.AddScoped<ITaskItemService, TaskItemService>();
 
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services

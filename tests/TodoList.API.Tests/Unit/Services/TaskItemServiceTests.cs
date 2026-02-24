@@ -122,11 +122,11 @@ public class TaskItemServiceTests
         Assert.Equal(1, taskItems.Meta.PerPage);
         Assert.Equal(3, taskItems.Meta.TotalPages);
         Assert.Equal(3, taskItems.Meta.TotalItems);
-        Assert.Equal($"/api/task-lists/{taskList.Pid}/tasks?page=2&perPage=1",
+        Assert.Equal($"/api/task-lists/{taskList.Pid}/items?page=2&perPage=1",
             taskItems.Meta.Links.Self);
-        Assert.Equal($"/api/task-lists/{taskList.Pid}/tasks?page=3&perPage=1",
+        Assert.Equal($"/api/task-lists/{taskList.Pid}/items?page=3&perPage=1",
             taskItems.Meta.Links.Next);
-        Assert.Equal($"/api/task-lists/{taskList.Pid}/tasks?page=1&perPage=1",
+        Assert.Equal($"/api/task-lists/{taskList.Pid}/items?page=1&perPage=1",
             taskItems.Meta.Links.Prev);
     }
 

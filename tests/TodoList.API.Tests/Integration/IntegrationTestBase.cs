@@ -41,6 +41,7 @@ public class IntegrationTestBase : IClassFixture<CustomWebAppApplicationFactory>
 
         await db.Database.EnsureCreatedAsync();
 
+        db.TaskItems.RemoveRange(db.TaskItems);
         db.TaskLists.RemoveRange(db.TaskLists);
         db.UserSessions.RemoveRange(db.UserSessions);
         db.Users.RemoveRange(db.Users);
