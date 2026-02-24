@@ -34,4 +34,21 @@ public class TaskItemController(
 
         return Ok(response);
     }
+
+    [HttpGet("{pid:guid}")]
+    public async Task<IActionResult> GetByPid(Guid taskListPid, Guid pid)
+    {
+        if (!User.TryGetUserPid(out var userPid))
+        {
+            return Unauthorized(new ErrorResponseDto
+            {
+                Title = "Unauthorized", Message = "Invalid user identifier."
+            });
+        }
+
+        var response =
+            await taskItemService.GetByPidAsync(userPid, taskListPid, pid);
+
+        return Ok(response);
+    }
 }

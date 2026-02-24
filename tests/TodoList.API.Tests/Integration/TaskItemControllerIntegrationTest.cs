@@ -12,6 +12,7 @@ public class TaskItemControllerIntegrationTest(
 {
     private TaskItemFixture TaskItemFixture => new(WithDb);
     private TaskListFixture TaskListFixture => new(WithDb);
+    private UserFixture UserFixture => new(WithDb);
 
     [Fact]
     public async Task GetAll_ShouldReturnOk()
@@ -102,6 +103,131 @@ public class TaskItemControllerIntegrationTest(
 
         var response =
             await client.GetAsync($"/api/task-lists/{Guid.NewGuid()}/items");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetByPid_ShouldReturnOk()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
+        var client = CreateClient(true);
+
+        var taskList = await TaskListFixture.CreateAsync(user.Pid);
+        var taskItem = await TaskItemFixture.CreateAsync(taskList.Pid);
+
+        var response =
+            await client.GetAsync(
+                $"/api/task-lists/{taskList.Pid}/items/{taskItem.Pid}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var taskItemResponse =
+            await response.Content.ReadFromJsonAsync<TaskItemResponseDto>();
+
+        Assert.NotNull(taskItemResponse);
+        Assert.Equal(taskItem.Pid, taskItemResponse.Pid);
+        Assert.Equal(taskItem.Description, taskItemResponse.Description);
+    }
+
+    [Fact]
+    public async Task GetByPid_ShouldReturnNotFound()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
+        var client = CreateClient(true);
+
+        var taskList = await TaskListFixture.CreateAsync(user.Pid);
+
+        var response =
+            await client.GetAsync(
+                $"/api/task-lists/{taskList.Pid}/items/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var error =
+            await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+        Assert.NotNull(error);
+        Assert.Equal("Not Found", error.Title);
+        Assert.Equal("Task item not found.", error.Message);
+    }
+
+    [Fact]
+    public async Task GetByPid_OwnItemOtherList_ShouldReturnNotFound()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
+        var client = CreateClient(true);
+
+        var taskList = await TaskListFixture.CreateAsync(user.Pid);
+        var taskList2 = await TaskListFixture.CreateAsync(user.Pid);
+        var taskItem = await TaskItemFixture.CreateAsync(taskList.Pid);
+
+        var response =
+            await client.GetAsync(
+                $"/api/task-lists/{taskList2.Pid}/items/{taskItem.Pid}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var error =
+            await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+        Assert.NotNull(error);
+        Assert.Equal("Not Found", error.Title);
+        Assert.Equal("Task item not found.", error.Message);
+    }
+
+    [Fact]
+    public async Task GetByPid_OtherUserItem_ShouldReturnNotFound()
+    {
+        await ResetDbAsync();
+        await SeedUserAndSessionAsync();
+        var user2 = await UserFixture.CreateAsync();
+        var client = CreateClient(true);
+
+        var taskList = await TaskListFixture.CreateAsync(user2.Pid);
+        var taskItem = await TaskItemFixture.CreateAsync(taskList.Pid);
+
+        var response =
+            await client.GetAsync(
+                $"/api/task-lists/{taskList.Pid}/items/{taskItem.Pid}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var error =
+            await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+        Assert.NotNull(error);
+        Assert.Equal("Not Found", error.Title);
+        Assert.Equal("Task list not found.", error.Message);
+    }
+
+    [Fact]
+    public async Task GetByPid_ShouldReturnUnauthorized()
+    {
+        await ResetDbAsync();
+        await SeedUserAndSessionAsync();
+        var client = CreateClient();
+
+        var response =
+            await client.GetAsync(
+                $"/api/task-lists/{Guid.NewGuid()}/items/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetByPid_NoSession_ShouldReturnUnauthorized()
+    {
+        await ResetDbAsync();
+        await SeedUserAsync();
+        var client = CreateClient(true);
+
+        var response =
+            await client.GetAsync(
+                $"/api/task-lists/{Guid.NewGuid()}/items/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
