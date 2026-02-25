@@ -115,6 +115,7 @@ public class TaskItemService(
         var taskItem = new TaskItem(
             taskListId,
             taskItemUpsertDto.Description,
+            taskItemUpsertDto.IsDone ?? false
         );
 
         context.TaskItems.Add(taskItem);
@@ -153,6 +154,19 @@ public class TaskItemService(
         }
 
         taskItem.UpdateDescription(taskItemUpdateDto.Description);
+
+        if (taskItemUpdateDto.IsDone is bool isDone)
+        {
+            if (isDone)
+            {
+                taskItem.MarkAsDone();
+            }
+            else
+            {
+                taskItem.UnmarkAsDone();
+            }
+        }
+
         await context.SaveChangesAsync();
 
         return new TaskItemResponseDto

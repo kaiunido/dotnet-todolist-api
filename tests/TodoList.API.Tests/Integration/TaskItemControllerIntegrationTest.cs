@@ -261,6 +261,36 @@ public class TaskItemControllerIntegrationTest(
     }
 
     [Fact]
+    public async Task Create_ShouldReturnCreated_WhenIsDoneIsTrue()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
+        var client = CreateClient(true);
+
+        var taskList = await TaskListFixture.CreateAsync(user.Pid);
+
+        var dto = new TaskItemUpsertDto
+        {
+            Description = "Test Task Item",
+            IsDone = true
+        };
+
+        var response =
+            await client.PostAsJsonAsync(
+                $"/api/task-lists/{taskList.Pid}/items", dto);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var taskItem =
+            await response.Content.ReadFromJsonAsync<TaskItemResponseDto>();
+
+        Assert.NotNull(taskItem);
+        Assert.NotEqual(Guid.Empty, taskItem.Pid);
+        Assert.Equal(dto.Description, taskItem.Description);
+        Assert.True(taskItem.IsDone);
+    }
+
+    [Fact]
     public async Task Create_ShouldReturnNotFound()
     {
         await ResetDbAsync();

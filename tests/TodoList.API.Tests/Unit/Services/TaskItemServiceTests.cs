@@ -248,6 +248,34 @@ public class TaskItemServiceTests
         Assert.Equal(1, count);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CreateAsync_ShouldCreateTaskWithIsDoneWithSuccess(
+        bool? isDone)
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        var service = new TaskItemService(context);
+
+        var itemDto = new TaskItemUpsertDto
+        {
+            Description = "Test Task",
+            IsDone = isDone
+        };
+
+        var createdItem =
+            await service.CreateAsync(user.Pid, taskList.Pid, itemDto);
+
+        Assert.NotNull(createdItem);
+        Assert.Equal(taskList.Pid, createdItem.TaskListPid);
+        Assert.NotEqual(Guid.Empty, createdItem.Pid);
+        Assert.Equal("Test Task", createdItem.Description);
+        Assert.Equal(isDone ?? false, createdItem.IsDone);
+    }
+
     [Fact]
     public async Task CreateAsync_ShouldThrow_ForTaskListNotFound()
     {
@@ -341,6 +369,34 @@ public class TaskItemServiceTests
         Assert.Equal(taskItem.Pid, updatedTaskItem.Pid);
         Assert.Equal(taskList.Pid, updatedTaskItem.TaskListPid);
         Assert.Equal("Updated Task", updatedTaskItem.Description);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task UpdateAsync_ShouldUpdateIsDoneWithSuccess(bool? isDone)
+    {
+        await using var context = TestDbContextFactory.Create();
+        var user = await UserFixture.SeedDefaultAsync(context);
+        var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
+        var taskItem =
+            await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
+        var service = new TaskItemService(context);
+
+        var itemDto = new TaskItemUpsertDto
+        {
+            Description = "Updated Task",
+            IsDone = isDone
+        };
+
+        var updatedTaskItem = await service.UpdateAsync(user.Pid, taskList.Pid,
+            taskItem.Pid, itemDto);
+
+        Assert.Equal(taskItem.Pid, updatedTaskItem.Pid);
+        Assert.Equal(taskList.Pid, updatedTaskItem.TaskListPid);
+        Assert.Equal("Updated Task", updatedTaskItem.Description);
+        Assert.Equal(isDone ?? false, updatedTaskItem.IsDone);
     }
 
     [Fact]
