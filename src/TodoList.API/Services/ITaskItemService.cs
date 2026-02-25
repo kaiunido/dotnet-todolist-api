@@ -20,14 +20,14 @@ public interface ITaskItemService
     Task<TaskItemResponseDto> CreateAsync(
         Guid userPid,
         Guid taskListPid,
-        TaskItemCreateDto taskItemCreateDto
+        TaskItemUpsertDto taskItemUpsertDto
     );
 
     Task<TaskItemResponseDto> UpdateAsync(
         Guid userPid,
         Guid taskListPid,
         Guid taskItemPid,
-        TaskItemCreateDto taskItemUpdateDto
+        TaskItemUpsertDto taskItemUpdateDto
     );
 
     Task DeleteAsync(

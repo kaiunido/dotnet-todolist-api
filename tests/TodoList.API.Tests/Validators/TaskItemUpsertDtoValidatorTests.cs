@@ -4,9 +4,9 @@ using TodoList.API.Validators;
 
 namespace TodoList.API.Tests.Validators;
 
-public class TaskItemCreateDtoValidatorTests
+public class TaskItemUpsertDtoValidatorTests
 {
-    private readonly TaskItemCreateDtoValidator _validator = new();
+    private readonly TaskItemUpsertDtoValidator _validator = new();
 
     public static TheoryData<string?> InvalidDescriptions =>
     [
@@ -20,7 +20,7 @@ public class TaskItemCreateDtoValidatorTests
     [Fact]
     public void ShouldNotHaveErrorWhenDescriptionIsValid()
     {
-        var dto = new TaskItemCreateDto { Description = "Test description" };
+        var dto = new TaskItemUpsertDto { Description = "Test description" };
         var result = _validator.TestValidate(dto);
 
         result.ShouldNotHaveValidationErrorFor(ti => ti.Description);
@@ -30,7 +30,7 @@ public class TaskItemCreateDtoValidatorTests
     [MemberData(nameof(InvalidDescriptions))]
     public void ShouldHaveErrorWhenDescriptionIsEmpty(string? description)
     {
-        var dto = new TaskItemCreateDto { Description = description };
+        var dto = new TaskItemUpsertDto { Description = description };
         var result = _validator.TestValidate(dto);
 
         result.ShouldHaveValidationErrorFor(ti => ti.Description);

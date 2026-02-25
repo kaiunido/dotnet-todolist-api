@@ -241,7 +241,7 @@ public class TaskItemControllerIntegrationTest(
 
         var taskList = await TaskListFixture.CreateAsync(user.Pid);
 
-        var dto = new TaskItemCreateDto
+        var dto = new TaskItemUpsertDto
         {
             Description = "Test Task Item"
         };
@@ -267,7 +267,7 @@ public class TaskItemControllerIntegrationTest(
         await SeedUserAndSessionAsync();
         var client = CreateClient(true);
 
-        var dto = new TaskItemCreateDto
+        var dto = new TaskItemUpsertDto
         {
             Description = "Test Task Item"
         };
@@ -293,7 +293,7 @@ public class TaskItemControllerIntegrationTest(
         await SeedUserAndSessionAsync();
         var client = CreateClient();
 
-        var dto = new TaskItemCreateDto
+        var dto = new TaskItemUpsertDto
         {
             Description = "Test Task Item"
         };
@@ -312,7 +312,7 @@ public class TaskItemControllerIntegrationTest(
         await SeedUserAsync();
         var client = CreateClient(true);
 
-        var dto = new TaskItemCreateDto
+        var dto = new TaskItemUpsertDto
         {
             Description = "Test Task Item"
         };
@@ -333,7 +333,7 @@ public class TaskItemControllerIntegrationTest(
 
         var taskList = await TaskListFixture.CreateAsync(user.Pid);
 
-        var dto = new TaskItemCreateDto
+        var dto = new TaskItemUpsertDto
         {
             Description = ""
         };

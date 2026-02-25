@@ -3,9 +3,9 @@ using TodoList.API.DTOs;
 
 namespace TodoList.API.Validators;
 
-public class TaskItemCreateDtoValidator : AbstractValidator<TaskItemCreateDto>
+public class TaskItemUpsertDtoValidator : AbstractValidator<TaskItemUpsertDto>
 {
-    public TaskItemCreateDtoValidator()
+    public TaskItemUpsertDtoValidator()
     {
         RuleFor(t => t.Description)
             .NotEmpty().WithMessage("Description is required.")

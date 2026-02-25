@@ -106,7 +106,7 @@ public class TaskItemService(
     public async Task<TaskItemResponseDto> CreateAsync(
         Guid userPid,
         Guid taskListPid,
-        TaskItemCreateDto taskItemCreateDto
+        TaskItemUpsertDto taskItemUpsertDto
     )
     {
         var (_, taskListId) =
@@ -114,7 +114,7 @@ public class TaskItemService(
 
         var taskItem = new TaskItem(
             taskListId,
-            taskItemCreateDto.Description
+            taskItemUpsertDto.Description,
         );
 
         context.TaskItems.Add(taskItem);
@@ -136,7 +136,7 @@ public class TaskItemService(
         Guid userPid,
         Guid taskListPid,
         Guid taskItemPid,
-        TaskItemCreateDto taskItemUpdateDto
+        TaskItemUpsertDto taskItemUpdateDto
     )
     {
         var (_, taskListId) =

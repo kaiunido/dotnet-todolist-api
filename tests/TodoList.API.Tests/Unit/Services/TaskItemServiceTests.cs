@@ -228,7 +228,7 @@ public class TaskItemServiceTests
         var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
         var service = new TaskItemService(context);
 
-        var itemDto = new TaskItemCreateDto
+        var itemDto = new TaskItemUpsertDto
         {
             Description = "  Test Task  "
         };
@@ -255,7 +255,7 @@ public class TaskItemServiceTests
         var user = await UserFixture.SeedDefaultAsync(context);
         var service = new TaskItemService(context);
 
-        var itemDto = new TaskItemCreateDto
+        var itemDto = new TaskItemUpsertDto
         {
             Description = "Test Task"
         };
@@ -279,7 +279,7 @@ public class TaskItemServiceTests
         var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
         var service = new TaskItemService(context);
 
-        var itemDto = new TaskItemCreateDto
+        var itemDto = new TaskItemUpsertDto
         {
             Description = "Test Task"
         };
@@ -304,7 +304,7 @@ public class TaskItemServiceTests
         var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
         var service = new TaskItemService(context);
 
-        var itemDto = new TaskItemCreateDto
+        var itemDto = new TaskItemUpsertDto
         {
             Description = "Test Task"
         };
@@ -330,7 +330,7 @@ public class TaskItemServiceTests
             await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
         var service = new TaskItemService(context);
 
-        var itemDto = new TaskItemCreateDto
+        var itemDto = new TaskItemUpsertDto
         {
             Description = "Updated Task"
         };
@@ -353,7 +353,7 @@ public class TaskItemServiceTests
             await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
         var service = new TaskItemService(context);
 
-        var itemDto = new TaskItemCreateDto
+        var itemDto = new TaskItemUpsertDto
         {
             Description = "Updated Task"
         };
@@ -376,7 +376,7 @@ public class TaskItemServiceTests
             await TaskItemFixture.SeedDefaultAsync(context, taskList.Id);
         var service = new TaskItemService(context);
 
-        var itemDto = new TaskItemCreateDto
+        var itemDto = new TaskItemUpsertDto
         {
             Description = "Updated Task"
         };
@@ -396,7 +396,7 @@ public class TaskItemServiceTests
         var taskList = await TaskListFixture.SeedDefaultAsync(context, user.Id);
         var service = new TaskItemService(context);
 
-        var itemDto = new TaskItemCreateDto
+        var itemDto = new TaskItemUpsertDto
         {
             Description = "Updated Task"
         };
@@ -422,7 +422,7 @@ public class TaskItemServiceTests
 
         var service = new TaskItemService(context);
 
-        var dto = new TaskItemCreateDto { Description = "Updated Task" };
+        var dto = new TaskItemUpsertDto { Description = "Updated Task" };
 
         var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
             service.UpdateAsync(user.Pid, list1.Pid, itemInList2.Pid, dto)

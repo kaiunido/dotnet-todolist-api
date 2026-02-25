@@ -59,7 +59,7 @@ public class TaskItemController(
     [HttpPost]
     public async Task<ActionResult<TaskItemResponseDto>> Create(
         [FromRoute] Guid taskListPid,
-        [FromBody] TaskItemCreateDto itemDto
+        [FromBody] TaskItemUpsertDto itemDto
     )
     {
         if (!User.TryGetUserPid(out var userPid))
