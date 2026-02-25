@@ -16,7 +16,7 @@ public class TaskItemController(
     [HttpGet]
     public async Task<ActionResult<PaginationResponse<TaskItemResponseDto>>>
         Get(
-            Guid taskListPid,
+            [FromRoute] Guid taskListPid,
             [FromQuery] int page = 1,
             [FromQuery] int perPage = 10
         )
@@ -38,7 +38,9 @@ public class TaskItemController(
 
     [HttpGet("{pid:guid}")]
     public async Task<ActionResult<TaskItemResponseDto>> GetByPid(
-        Guid taskListPid, Guid pid)
+        [FromRoute] Guid taskListPid,
+        [FromRoute] Guid pid
+    )
     {
         if (!User.TryGetUserPid(out var userPid))
         {
@@ -52,5 +54,29 @@ public class TaskItemController(
             await taskItemService.GetByPidAsync(userPid, taskListPid, pid);
 
         return Ok(response);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<TaskItemResponseDto>> Create(
+        [FromRoute] Guid taskListPid,
+        [FromBody] TaskItemCreateDto itemDto
+    )
+    {
+        if (!User.TryGetUserPid(out var userPid))
+        {
+            return Unauthorized(new ErrorResponseDto
+            {
+                Title = "Unauthorized", Message = "Invalid user identifier."
+            });
+        }
+
+        var response = await taskItemService.CreateAsync(userPid, taskListPid,
+            itemDto);
+
+        return CreatedAtAction(
+            nameof(GetByPid),
+            new { taskListPid, pid = response.Pid },
+            response
+        );
     }
 }

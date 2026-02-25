@@ -231,4 +231,130 @@ public class TaskItemControllerIntegrationTest(
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Create_ShouldReturnCreated()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
+        var client = CreateClient(true);
+
+        var taskList = await TaskListFixture.CreateAsync(user.Pid);
+
+        var dto = new TaskItemCreateDto
+        {
+            Description = "Test Task Item"
+        };
+
+        var response =
+            await client.PostAsJsonAsync(
+                $"/api/task-lists/{taskList.Pid}/items", dto);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var taskItem =
+            await response.Content.ReadFromJsonAsync<TaskItemResponseDto>();
+
+        Assert.NotNull(taskItem);
+        Assert.NotEqual(Guid.Empty, taskItem.Pid);
+        Assert.Equal(dto.Description, taskItem.Description);
+    }
+
+    [Fact]
+    public async Task Create_ShouldReturnNotFound()
+    {
+        await ResetDbAsync();
+        await SeedUserAndSessionAsync();
+        var client = CreateClient(true);
+
+        var dto = new TaskItemCreateDto
+        {
+            Description = "Test Task Item"
+        };
+
+        var response =
+            await client.PostAsJsonAsync(
+                $"/api/task-lists/{Guid.NewGuid()}/items", dto);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var error =
+            await response.Content.ReadFromJsonAsync<ErrorResponseDto>();
+
+        Assert.NotNull(error);
+        Assert.Equal("Not Found", error.Title);
+        Assert.Equal("Task list not found.", error.Message);
+    }
+
+    [Fact]
+    public async Task Create_ShouldReturnUnauthorized()
+    {
+        await ResetDbAsync();
+        await SeedUserAndSessionAsync();
+        var client = CreateClient();
+
+        var dto = new TaskItemCreateDto
+        {
+            Description = "Test Task Item"
+        };
+
+        var response =
+            await client.PostAsJsonAsync(
+                $"/api/task-lists/{Guid.NewGuid()}/items", dto);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_NoSession_ShouldReturnUnauthorized()
+    {
+        await ResetDbAsync();
+        await SeedUserAsync();
+        var client = CreateClient(true);
+
+        var dto = new TaskItemCreateDto
+        {
+            Description = "Test Task Item"
+        };
+
+        var response =
+            await client.PostAsJsonAsync(
+                $"/api/task-lists/{Guid.NewGuid()}/items", dto);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Create_InvalidDto_ShouldReturnBadRequest()
+    {
+        await ResetDbAsync();
+        var user = await SeedUserAndSessionAsync();
+        var client = CreateClient(true);
+
+        var taskList = await TaskListFixture.CreateAsync(user.Pid);
+
+        var dto = new TaskItemCreateDto
+        {
+            Description = ""
+        };
+
+        var response =
+            await client.PostAsJsonAsync(
+                $"/api/task-lists/{taskList.Pid}/items", dto);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var error =
+            await response.Content
+                .ReadFromJsonAsync<ValidationErrorResponseDto>();
+        Assert.NotNull(error);
+        Assert.Equal("One or more validation errors occurred.", error.Title);
+        Assert.True(error.Errors.ContainsKey("Description"));
+
+        var descriptionErrors = error.Errors["Description"];
+
+        Assert.Contains("Description is required.", descriptionErrors);
+        Assert.Contains("Description must be between 3 and 255 characters.",
+            descriptionErrors);
+    }
 }
