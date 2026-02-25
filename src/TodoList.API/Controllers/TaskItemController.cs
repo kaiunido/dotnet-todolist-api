@@ -14,11 +14,12 @@ public class TaskItemController(
 ) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> Get(
-        Guid taskListPid,
-        [FromQuery] int page = 1,
-        [FromQuery] int perPage = 10
-    )
+    public async Task<ActionResult<PaginationResponse<TaskItemResponseDto>>>
+        Get(
+            Guid taskListPid,
+            [FromQuery] int page = 1,
+            [FromQuery] int perPage = 10
+        )
     {
         if (!User.TryGetUserPid(out var userPid))
         {
@@ -36,7 +37,8 @@ public class TaskItemController(
     }
 
     [HttpGet("{pid:guid}")]
-    public async Task<IActionResult> GetByPid(Guid taskListPid, Guid pid)
+    public async Task<ActionResult<TaskItemResponseDto>> GetByPid(
+        Guid taskListPid, Guid pid)
     {
         if (!User.TryGetUserPid(out var userPid))
         {
